@@ -19,9 +19,24 @@ En contextos económicos de alta inflación, la gestión manual de colectas peri
 
 El sistema busca reducir el trabajo manual realizado actualmente mediante planillas de cálculo, facilitando el registro de participantes, la determinación del importe correspondiente a cada colecta y el seguimiento de los aportes realizados.
 
-El caso de uso inicial del proyecto es un **grupo de padres de un colegio**, donde se gestionan las colectas de cumpleaños de los alumnos durante el ciclo lectivo.
+El caso de uso inicial del proyecto es un grupo de padres de un colegio, donde se gestionan las colectas de cumpleaños de los alumnos durante el ciclo lectivo.
 
-> **Alcance:** ColectaApp no procesa pagos ni realiza transferencias. Los aportes se realizan por fuera de la plataforma y el recaudador registra en el sistema los aportes recibidos.
+**Alcance:** ColectaApp no procesa pagos ni realiza transferencias. Los aportes se realizan por fuera de la plataforma y el recaudador registra en el sistema los aportes recibidos.
+
+---
+
+## 🎯 Objetivos del Proyecto
+
+**Objetivo general:** desarrollar una plataforma web que automatice la gestión de colectas de cumpleaños circulares entre grupos de padres de un colegio, protegiendo el valor económico del aporte frente a la inflación mediante unidades de referencia configurables.
+
+**Objetivos específicos:**
+
+* Diseñar un modelo de participantes que permita la participación opcional e independiente en cada colecta.
+* Automatizar la generación de colectas a partir de un calendario de cumpleaños cargado por el administrador.
+* Implementar un mecanismo de indexación que fije el importe a aportar en unidades de referencia (no en pesos), congelando su valor en ARS el día hábil anterior a cada colecta.
+* Incorporar control de acceso basado en roles (Administrador, Recaudador, Participante) mediante autenticación segura.
+* Garantizar trazabilidad histórica de participantes y aportes, aun cuando un participante deje de pertenecer al grupo.
+
 ---
 
 ## ✨ Características Principales
@@ -31,7 +46,7 @@ El caso de uso inicial del proyecto es un **grupo de padres de un colegio**, don
 * **Gestión de cumpleaños:** el administrador carga manualmente el calendario de cumpleaños de los alumnos.
 * **Generación automática de colectas:** a partir del calendario de cumpleaños, el sistema genera automáticamente una colecta para cada cumpleaños, evitando que el administrador tenga que crear cada colecta manualmente.
 * **Aportes indexados mediante unidades de referencia:** el grupo puede establecer una unidad de referencia para determinar el importe a aportar (ej.: 5 litros de nafta súper por participante).
-* **Congelamiento de Valor Automático:** El sistema ejecuta un proceso programado que fija el valor exacto en pesos argentinos (ARS) el día hábil anterior a la colecta.
+* **Congelamiento de Valor Automático:** el sistema ejecuta un proceso programado que fija el valor exacto en pesos argentinos (ARS) el día hábil anterior a la colecta.
 * **Participación individual:** para cada colecta, cada participante decide si desea participar o no. La decisión es independiente de las demás colectas.
 * **Gestión de recaudadores:** los participantes del grupo pueden ser habilitados como recaudadores. Estos podrán consultar los participantes, visualizar aportes pendientes y registrar los aportes recibidos.
 * **Notificaciones y recordatorios:** generación de avisos para informar a los participantes sobre próximas colectas, importe a aportar y los datos proporcionados por el recaudador para realizar el aporte.
@@ -62,6 +77,7 @@ El desarrollo aborda los siguientes desafíos de ingeniería de software:
 | **Despliegue Backend** | Render | Permite desplegar el backend sin administrar un servidor propio. Se evaluará el uso de Docker solo si fuera necesario. |
 | **Control de versiones** | Git + GitHub | Permite trabajar colaborativamente y cumplir con el requisito de un único repositorio para todo el proyecto. |
 
+---
 
 ## ☁️ Despliegue
 
@@ -72,6 +88,7 @@ El desarrollo aborda los siguientes desafíos de ingeniería de software:
 | Base de datos (MongoDB Atlas) | Cluster M0 — configurado |
 
 ---
+
 ## 📂 Estructura del Repositorio
 
 ```text
@@ -92,4 +109,30 @@ colectaapp/
 └── README.md
 ```
 
+---
 
+## 🗓️ Plan de Trabajo
+
+| Entrega | Fecha | Alcance |
+|---|---|---|
+| **1.ª Entrega** | 30/08 | Propuesta del proyecto, definición de alcance (caso de uso escolar), stack tecnológico proyectado y repositorio único de GitHub con los tres integrantes como colaboradores. |
+| **2.ª Entrega** | 27/09 | Diseño y listado de módulos del backend, modelo de datos definitivo y cierre de las decisiones de diseño abiertas (ver más abajo). |
+| **Entrega Final** | 14/11 | Aplicación funcional desplegada (frontend en Netlify, backend en Render), documentación completa y defensa oral. |
+
+### Decisiones abiertas (a cerrar antes de la 2.ª Entrega)
+
+* **Asignación del recaudador por colecta:** el rol de recaudador se habilita como condición general del participante, pero falta definir la regla puntual para cada colecta: si se sugiere automáticamente a partir de quien recibió la colecta anterior (sosteniendo la lógica de cadena circular) o si el administrador lo asigna manualmente entre los participantes habilitados.
+* **Alcance de las notificaciones:** confirmar si los recordatorios automáticos (vía mail o notificación) quedan dentro del MVP de la Entrega Final o se documentan como una ampliación futura.
+
+---
+
+## 👥 Integrantes
+
+| Nombre | Usuario de GitHub |
+|---|---|
+| Pablo De La Puente | https://github.com/JohnTheMano |
+| Eugenia Demarchi | https://github.com/EugeniaDemarchi |
+| Cintia García | https://github.com/Cigarcia1307 |
+
+
+---
