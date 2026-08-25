@@ -62,7 +62,6 @@ El desarrollo aborda los siguientes desafíos de ingeniería de software:
 | **Despliegue Backend** | Render | Permite desplegar el backend sin administrar un servidor propio. Se evaluará el uso de Docker solo si fuera necesario. |
 | **Control de versiones** | Git + GitHub | Permite trabajar colaborativamente y cumplir con el requisito de un único repositorio para todo el proyecto. |
 
----
 
 ## ☁️ Despliegue
 
@@ -73,7 +72,9 @@ El desarrollo aborda los siguientes desafíos de ingeniería de software:
 | Base de datos (MongoDB Atlas) | Cluster M0 — configurado |
 
 ---
+## 📂 Estructura del Repositorio
 
+```text
 colectaapp/
 │
 ├── frontend/              # React + TypeScript
@@ -89,7 +90,6 @@ colectaapp/
 ├── .gitignore
 ├── LICENSE
 └── README.md
-
 ```
 
 
