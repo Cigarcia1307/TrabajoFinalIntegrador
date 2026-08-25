@@ -4,10 +4,9 @@
 **ColectaApp — Plataforma de Colectas Indexadas y Circulares**
 
 > **Trabajo Integrador Final (TIF)**
-> **Carrera:** Tecnicatura Universitaria en Programación (a distancia) — UTN
+> **Carrera:** Tecnicatura Universitaria en Programación a distancia — UTN
 > **Integrantes:** Pablo De La Puente, Eugenia Demarchi y Cintia García
 > **Tutora:** Sofía Carnevale
-> **Comisión:** _(completar)_
 > **Estado:** En desarrollo — 1.ª Entrega (Propuesta de Proyecto y Repositorio)
 
 ---
