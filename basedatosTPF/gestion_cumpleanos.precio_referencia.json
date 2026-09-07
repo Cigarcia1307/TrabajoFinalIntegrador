@@ -1,0 +1,24 @@
+[{
+  "_id": {
+    "$oid": "6a9e9975ba68274a77d05cfd"
+  },
+  "indice": "nafta_ypf",
+  "fecha": "2026-06-29",
+  "valor_unitario_ars": 1250
+},
+{
+  "_id": {
+    "$oid": "6a9e99b1ba68274a77d05cff"
+  },
+  "indice": "dolar_mep",
+  "fecha": "2026-06-29",
+  "valor_unitario_ars": 1450
+},
+{
+  "_id": {
+    "$oid": "6a9e99e9ba68274a77d05d01"
+  },
+  "indice": "cajita_feliz",
+  "fecha": "2026-09-07",
+  "valor_unitario_ars": 13900
+}]

@@ -1,0 +1,51 @@
+[{
+  "_id": {
+    "$oid": "6a9dec18b9068acfd506196b"
+  },
+  "nombre": "Juan",
+  "apellido": "Pérez",
+  "email": "juan.perez@gmail.com",
+  "telefono": "3511234567",
+  "cbu_alias": "juan.perez.mp",
+  "activo": true,
+  "hijos": [
+    {
+      "nombre": "Tomás",
+      "fecha_nacimiento": "2015-03-20"
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "6a9dfd0ab9068acfd5061971"
+  },
+  "nombre": "María",
+  "apellido": "Gómez",
+  "email": "maria.gomez@gmail.com",
+  "telefono": "3512345678",
+  "cbu_alias": "maria.gomez.mp",
+  "activo": true,
+  "hijos": [
+    {
+      "nombre": "Sofía",
+      "fecha_nacimiento": "2015-06-30"
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "6a9dfd4ab9068acfd5061973"
+  },
+  "nombre": "Carlos",
+  "apellido": "Fernández",
+  "email": "carlos.fernandez@gmail.com",
+  "telefono": "3513456789",
+  "cbu_alias": "carlos.fernandez.mp",
+  "activo": true,
+  "hijos": [
+    {
+      "nombre": "Valentina",
+      "fecha_nacimiento": "2015-09-15"
+    }
+  ]
+}]

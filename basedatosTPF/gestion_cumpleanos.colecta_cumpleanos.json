@@ -1,0 +1,123 @@
+[{
+  "_id": {
+    "$oid": "6a3ef48602603a0a325ccf74"
+  },
+  "ciclo_lectivo": 2026,
+  "fecha_cumpleanos": {
+    "$date": "2026-06-30T00:00:00.000Z"
+  },
+  "monto_individual_peses": 12000,
+  "monto_total_objetivo": 95000,
+  "estado_colecta": "en_recaudacion",
+  "activo": false,
+  "beneficiario_nombre": "Tomás",
+  "es_primera_voluntaria": true,
+  "indice_referencia": "Nafta_ypf",
+  "orden_en_la_rueda": 1,
+  "padre_id": {
+    "$oid": "6a9dec18b9068acfd506196b"
+  },
+  "recaudador_id": {
+    "$oid": "6a9dec18b9068acfd506196b"
+  },
+  "aportes": [
+    {
+      "padre_id": {
+        "$oid": "6a9dfd0ab9068acfd5061971"
+      },
+      "monto_pagado": 12000,
+      "fecha_pago": "2026-06-15",
+      "pagado": true
+    },
+    {
+      "padre_id": {
+        "$oid": "6a9dfd4ab9068acfd5061973"
+      },
+      "monto_pagado": 0,
+      "fecha_pago": null,
+      "pagado": false
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "6a3f00323c90f3aa2998ba85"
+  },
+  "ciclo_lectivo": 2026,
+  "fecha_cumpleanos": {
+    "$date": "2026-06-30T00:00:00.000Z"
+  },
+  "monto_individual_peses": 12000,
+  "monto_total_objetivo": 95000,
+  "estado_colecta": "en_recaudacion",
+  "activo": false,
+  "beneficiario_nombre": "Sofía",
+  "es_primera_voluntaria": false,
+  "indice_referencia": "nafta_ypf",
+  "orden_en_la_rueda": 2,
+  "padre_id": {
+    "$oid": "6a9dfd0ab9068acfd5061971"
+  },
+  "recaudador_id": {
+    "$oid": "6a9dec18b9068acfd506196b"
+  },
+  "aportes": [
+    {
+      "padre_id": {
+        "$oid": "6a9dec18b9068acfd506196b"
+      },
+      "monto_pagado": 12000,
+      "fecha_pago": "2026-06-20",
+      "pagado": true
+    },
+    {
+      "padre_id": {
+        "$oid": "6a9dfd4ab9068acfd5061973"
+      },
+      "monto_pagado": 0,
+      "fecha_pago": null,
+      "pagado": false
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "6a3f007d1e5ecb308b5929c0"
+  },
+  "ciclo_lectivo": 2026,
+  "fecha_cumpleanos": {
+    "$date": "2026-06-30T00:00:00.000Z"
+  },
+  "monto_individual_peses": 12000,
+  "monto_total_objetivo": 95000,
+  "estado_colecta": "en_recaudacion",
+  "activo": false,
+  "beneficiario_nombre": "Valentina",
+  "es_primera_voluntaria": false,
+  "indice_referencia": "nafta_ypf",
+  "orden_en_la_rueda": 3,
+  "padre_id": {
+    "$oid": "6a9dfd4ab9068acfd5061973"
+  },
+  "recaudador_id": {
+    "$oid": "6a9dfd0ab9068acfd5061971"
+  },
+  "aportes": [
+    {
+      "padre_id": {
+        "$oid": "6a9dec18b9068acfd506196b"
+      },
+      "monto_pagado": 12000,
+      "fecha_pago": "2026-06-25",
+      "pagado": true
+    },
+    {
+      "padre_id": {
+        "$oid": "6a9dfd0ab9068acfd5061971"
+      },
+      "monto_pagado": 0,
+      "fecha_pago": null,
+      "pagado": false
+    }
+  ]
+}]
