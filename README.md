@@ -7,7 +7,7 @@
 > **Carrera:** Tecnicatura Universitaria en Programación a distancia — UTN
 > **Integrantes:** Pablo De La Puente, Eugenia Demarchi y Cintia García
 > **Tutora:** Sofía Carnevale
-> **Estado:** En desarrollo — 1.ª Entrega (Propuesta de Proyecto y Repositorio)
+> **Estado:** En desarrollo — 2.ª Entrega (Diseño y Módulos)
 
 ---
 
@@ -31,26 +31,26 @@ El caso de uso inicial del proyecto es un grupo de padres de un colegio, donde s
 
 **Objetivos específicos:**
 
-* Diseñar un modelo de participantes que permita la participación opcional e independiente en cada colecta.
-* Automatizar la generación de colectas a partir de un calendario de cumpleaños cargado por el administrador.
-* Implementar un mecanismo de indexación que fije el importe a aportar en unidades de referencia (no en pesos), congelando su valor en ARS el día hábil anterior a cada colecta.
-* Incorporar control de acceso basado en roles (Administrador, Recaudador, Participante) mediante autenticación segura.
-* Garantizar trazabilidad histórica de participantes y aportes, aun cuando un participante deje de pertenecer al grupo.
+- Diseñar un modelo de participantes que permita la participación opcional e independiente en cada colecta.
+- Automatizar la generación de colectas a partir de un calendario de cumpleaños cargado por el administrador.
+- Implementar un mecanismo de indexación que fije el importe a aportar en unidades de referencia (no en pesos), congelando su valor en ARS el día hábil anterior a cada colecta.
+- Incorporar control de acceso basado en roles (Administrador, Participante — "Recaudador" es una condición rotativa del Participante, no un rol de acceso) mediante autenticación segura.
+- Garantizar trazabilidad histórica de participantes y aportes, aun cuando un participante deje de pertenecer al grupo.
 
 ---
 
 ## ✨ Características Principales
 
-* **Gestión de participantes:** los padres pertenecen al grupo de forma permanente mientras continúen formando parte del mismo. Pueden participar o no participar individualmente en cada colecta.
-* **Invitación y registro de usuarios:** el administrador incorpora a los padres al grupo mediante una invitación. El participante completa sus datos y establece su contraseña para crear su cuenta.
-* **Gestión de cumpleaños:** el administrador carga manualmente el calendario de cumpleaños de los alumnos.
-* **Generación automática de colectas:** a partir del calendario de cumpleaños, el sistema genera automáticamente una colecta para cada cumpleaños, evitando que el administrador tenga que crear cada colecta manualmente.
-* **Aportes indexados mediante unidades de referencia:** el grupo puede establecer una unidad de referencia para determinar el importe a aportar (ej.: 5 litros de nafta súper por participante).
-* **Congelamiento de Valor Automático:** el sistema ejecuta un proceso programado que fija el valor exacto en pesos argentinos (ARS) el día hábil anterior a la colecta.
-* **Participación individual:** para cada colecta, cada participante decide si desea participar o no. La decisión es independiente de las demás colectas.
-* **Gestión de recaudadores:** los participantes del grupo pueden ser habilitados como recaudadores. Estos podrán consultar los participantes, visualizar aportes pendientes y registrar los aportes recibidos.
-* **Notificaciones y recordatorios:** generación de avisos para informar a los participantes sobre próximas colectas, importe a aportar y los datos proporcionados por el recaudador para realizar el aporte.
-* **Trazabilidad e historial:** se conserva el historial de participación y aportes. Los participantes que dejen de pertenecer al grupo serán desactivados, sin eliminar su información histórica.
+- **Gestión de participantes:** los padres pertenecen al grupo de forma permanente mientras continúen formando parte del mismo. Pueden participar o no participar individualmente en cada colecta.
+- **Invitación y registro de usuarios:** el administrador incorpora a los padres al grupo mediante una invitación. El participante completa sus datos y establece su contraseña para crear su cuenta.
+- **Gestión de cumpleaños:** el administrador carga manualmente el calendario de cumpleaños de los alumnos.
+- **Generación automática de colectas:** a partir del calendario de cumpleaños, el sistema genera automáticamente una colecta para cada cumpleaños, evitando que el administrador tenga que crear cada colecta manualmente.
+- **Aportes indexados mediante unidades de referencia:** el grupo puede establecer una unidad de referencia para determinar el importe a aportar (ej.: 5 litros de nafta súper por participante).
+- **Congelamiento de Valor Automático:** el sistema ejecuta un proceso programado que fija el valor exacto en pesos argentinos (ARS) el día hábil anterior a la colecta.
+- **Participación individual:** para cada colecta, cada participante decide si desea participar o no. La decisión es independiente de las demás colectas.
+- **Gestión de recaudadores:** el recaudador de cada colecta no se asigna manualmente: se resuelve por regla de negocio (ver "Decisiones de diseño cerradas en la 2.ª Entrega"). Quien organiza puede consultar los participantes, visualizar aportes pendientes y registrar los aportes recibidos.
+- **Notificaciones y recordatorios:** _fuera del MVP_ — el monto congelado y el CBU/alias del recaudador se muestran en pantalla al participante; el envío automático de avisos por mail/push queda documentado como ampliación futura (Módulo 7, ver "Módulos del Backend").
+- **Trazabilidad e historial:** se conserva el historial de participación y aportes. Los participantes que dejen de pertenecer al grupo serán desactivados, sin eliminar su información histórica.
 
 ---
 
@@ -58,34 +58,172 @@ El caso de uso inicial del proyecto es un grupo de padres de un colegio, donde s
 
 El desarrollo aborda los siguientes desafíos de ingeniería de software:
 
-* **Patrón Strategy:** se evaluará su utilización para permitir integrar diferentes fuentes de valores de referencia sin modificar la lógica principal del sistema.
-* **Tareas programadas (Scheduler):** ejecución automática de procesos como la actualización y congelamiento de valores de referencia y la generación de recordatorios.
-* **Seguridad y Control de Acceso:** autenticación mediante JWT, almacenamiento seguro de contraseñas y control de acceso basado en roles (RBAC).
+- **Patrón Strategy:** resuelve la obtención de cotizaciones de distintos índices de referencia (Nafta YPF, Dólar MEP, Cajita Feliz) mediante una interfaz `CotizacionStrategy` con una implementación por índice, sin acoplar el servicio de colectas a un índice particular.
+- **Tareas programadas (Scheduler):** ejecución automática del congelamiento de valores de referencia el día hábil anterior a cada colecta. La generación de recordatorios queda fuera del MVP (ver "Módulos del Backend").
+- **Seguridad y Control de Acceso:** autenticación mediante JWT, almacenamiento seguro de contraseñas y control de acceso basado en roles (RBAC).
+
+---
+
+## 🗂️ Esquema de la Base de Datos
+
+Modelo documental en MongoDB Atlas, diseñado y aprobado en la cátedra de Bases de Datos II, sin modificaciones para esta entrega: tres colecciones — `padres` (con `hijos` embebidos), `colecta_cumpleanos` (con `aportes` embebidos) y `precio_referencia`. Detalle completo de campos, justificación de embedding/linking y datos de ejemplo en [`basedatosTPF/esquema_base_datos.md`](./basedatosTPF/esquema_base_datos.md).
+
+```mermaid
+erDiagram
+    PADRES {
+        ObjectId _id
+        string nombre
+        string apellido
+        string email
+        string telefono
+        string cbu_alias
+        boolean activo
+    }
+    HIJOS {
+        string nombre
+        date fecha_nacimiento
+    }
+    COLECTA_CUMPLEANOS {
+        ObjectId _id
+        number ciclo_lectivo
+        date fecha_cumpleanos
+        string beneficiario_nombre
+        ObjectId padre_id
+        ObjectId recaudador_id
+        number monto_individual_pesos
+        number monto_total_objetivo
+        string estado_colecta
+        number orden_en_la_rueda
+        boolean es_primera_voluntaria
+        string indice_referencia
+        boolean activo
+    }
+    APORTES {
+        ObjectId padre_id
+        number monto_pagado
+        date fecha_pago
+        boolean pagado
+    }
+    PRECIO_REFERENCIA {
+        string indice
+        date fecha
+        number valor_unitario_ars
+    }
+
+    PADRES ||--o{ HIJOS : "embebe (array hijos)"
+    PADRES ||--o{ COLECTA_CUMPLEANOS : "beneficiario (padre_id)"
+    PADRES ||--o{ COLECTA_CUMPLEANOS : "recaudador (recaudador_id)"
+    COLECTA_CUMPLEANOS ||--o{ APORTES : "embebe (array aportes)"
+    PADRES ||--o{ APORTES : "aporta (padre_id)"
+```
+
+> La relación entre `precio_referencia.indice` y `colecta_cumpleanos.indice_referencia` es lógica (por string), no por ObjectId, y no se representa arriba por no ser una referencia formal de la base.
+
+---
+
+## 📦 Módulos del Backend (2.ª Entrega)
+
+En base al esquema definido y a las reglas de negocio de este README, el backend se organiza en seis módulos funcionales para el MVP. Cada uno se detalla con su objetivo, clases principales y endpoints REST — a modo de contrato de API, para poder arrancar el frontend con datos mock que respeten la misma forma que las respuestas reales.
+
+### Módulo 1 · Autenticación y Roles
+
+Gestiona el acceso y diferencia permisos. Roles de sistema: `ADMINISTRADOR` y `PARTICIPANTE` ("Recaudador" no es un rol de acceso, es una condición rotativa determinada por `recaudador_id`). Alta por invitación (link/QR) con registro propio del padre.
+**Clases:** `AuthController`, `JwtService`, `SecurityConfig`, `Rol` (enum), `InvitacionService`.
+
+```
+POST   /api/auth/invitaciones
+POST   /api/auth/registro
+POST   /api/auth/login
+GET    /api/auth/me
+```
+
+### Módulo 2 · Participantes
+
+Administra padres e hijos (beneficiarios) embebidos. Baja lógica vía `activo`.
+**Clases:** `Participante`, `Beneficiario`, `ParticipanteController`, `ParticipanteService`, `ParticipanteRepository`.
+
+```
+GET    /api/participantes
+GET    /api/participantes/{id}
+PUT    /api/participantes/{id}
+PATCH  /api/participantes/{id}/baja
+POST   /api/participantes/{id}/beneficiarios
+PUT    /api/participantes/{id}/beneficiarios/{beneficiarioId}
+```
+
+### Módulo 3 · Colectas
+
+Crea y da seguimiento a cada colecta dentro de la rueda circular anual, incluyendo la asignación del recaudador (ver decisión cerrada más abajo).
+**Clases:** `ColectaCumpleanos`, `CicloLectivo`, `ColectaController`, `ColectaService`, `AsignacionRecaudadorService`.
+
+```
+POST   /api/ciclos
+GET    /api/colectas?ciclo=2026
+GET    /api/colectas/{id}
+POST   /api/colectas/{id}/postular-voluntario
+GET    /api/colectas/{id}/recaudador
+```
+
+### Módulo 4 · Índices de Referencia (patrón Strategy)
+
+Resuelve la cotización de cada índice sin acoplar el servicio de colectas a uno en particular. El índice se fija por votación entre los participantes al invitarse.
+**Clases:** `CotizacionStrategy` (interfaz), `NaftaYpfStrategy`, `DolarMepStrategy`, `CajitaFelizStrategy`, `IndiceReferenciaController`, `VotacionIndiceService`.
+
+```
+GET    /api/indices
+POST   /api/indices/votar
+GET    /api/indices/{indice}/cotizacion-actual
+```
+
+### Módulo 5 · Congelamiento de Montos
+
+Scheduler/Cron Job que fija el valor en pesos el día hábil previo a cada colecta, persistiéndolo en `precio_referencia` y en `monto_individual_pesos`.
+**Clases:** `CongelamientoScheduler`, `PrecioReferencia`, `CongelamientoService`.
+
+```
+GET    /api/precios-referencia?indice=nafta_ypf&fecha=2026-06-29
+POST   /api/precios-referencia/congelar/{colectaId}
+```
+
+### Módulo 6 · Aportes y Pagos
+
+Registra los aportes individuales por colecta y su estado de pago, resolviendo el problema de transparencia planteado en la propuesta original.
+**Clases:** `Aporte` (embebido), `AporteController`, `AporteService`, `ReporteDeudaService`.
+
+```
+GET    /api/colectas/{id}/aportes
+PATCH  /api/colectas/{id}/aportes/{padreId}
+GET    /api/colectas/{id}/deuda-pendiente
+```
+
+### Fuera de alcance del MVP
+
+**Módulo 7 · Notificaciones** — automatizar los recordatorios de pago vía mail/push, disparados tras el congelamiento (Módulo 5). Documentado como ampliación futura incremental; no requiere cambios en el esquema de datos.
 
 ---
 
 ## 🏗️ Stack Tecnológico Proyectado
 
-| Componente | Tecnología / Proveedor | Descripción |
-|---|---|---|
-| **Frontend** | React + TypeScript | Permite desarrollar rápidamente una interfaz web modular y tiene abundante documentación y recursos disponibles. |
-| **Backend** | Java + Spring Boot | Permite mantener Java y aplicar POO. Spring Data MongoDB facilita la integración del backend con MongoDB. |
-| **Gestor de dependencias** | Gradle | Permite gestionar las dependencias y automatizar la construcción del proyecto de forma sencilla. |
-| **API** | REST | Enfoque simple y ampliamente utilizado para comunicar frontend y backend mediante HTTP y JSON. |
-| **Base de datos** | MongoDB Atlas | Permite utilizar MongoDB en la nube sin tener que administrar un servidor de base de datos propio. |
-| **Despliegue Frontend** | Netlify | Facilita el despliegue del frontend directamente desde GitHub, con integración continua por rama. |
-| **Despliegue Backend** | Render | Permite desplegar el backend sin administrar un servidor propio. Se evaluará el uso de Docker solo si fuera necesario. |
-| **Control de versiones** | Git + GitHub | Permite trabajar colaborativamente y cumplir con el requisito de un único repositorio para todo el proyecto. |
+| Componente                 | Tecnología / Proveedor | Descripción                                                                                                            |
+| -------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Frontend**               | React + TypeScript     | Permite desarrollar rápidamente una interfaz web modular y tiene abundante documentación y recursos disponibles.       |
+| **Backend**                | Java + Spring Boot     | Permite mantener Java y aplicar POO. Spring Data MongoDB facilita la integración del backend con MongoDB.              |
+| **Gestor de dependencias** | Gradle                 | Permite gestionar las dependencias y automatizar la construcción del proyecto de forma sencilla.                       |
+| **API**                    | REST                   | Enfoque simple y ampliamente utilizado para comunicar frontend y backend mediante HTTP y JSON.                         |
+| **Base de datos**          | MongoDB Atlas          | Permite utilizar MongoDB en la nube sin tener que administrar un servidor de base de datos propio.                     |
+| **Despliegue Frontend**    | Netlify                | Facilita el despliegue del frontend directamente desde GitHub, con integración continua por rama.                      |
+| **Despliegue Backend**     | Render                 | Permite desplegar el backend sin administrar un servidor propio. Se evaluará el uso de Docker solo si fuera necesario. |
+| **Control de versiones**   | Git + GitHub           | Permite trabajar colaborativamente y cumplir con el requisito de un único repositorio para todo el proyecto.           |
 
 ---
 
 ## ☁️ Despliegue
 
-| Componente | URL |
-|---|---|
-| Frontend (Netlify) | _pendiente de despliegue_ |
-| Backend (Render) | _pendiente de despliegue_ |
-| Base de datos (MongoDB Atlas) | Cluster M0 — configurado |
+| Componente                    | URL                       |
+| ----------------------------- | ------------------------- |
+| Frontend (Netlify)            | _pendiente de despliegue_ |
+| Backend (Render)              | _pendiente de despliegue_ |
+| Base de datos (MongoDB Atlas) | Cluster M0 — configurado  |
 
 ---
 
@@ -104,6 +242,12 @@ colectaapp/
 │   │   └── test/
 │   └── build.gradle
 │
+├── basedatosTPF/          # Esquema de datos y exports de ejemplo (Mongo)
+│   ├── esquema_base_datos.md
+│   ├── gestion_cumpleanos.padres.json
+│   ├── gestion_cumpleanos.colecta_cumpleanos.json
+│   └── gestion_cumpleanos.precio_referencia.json
+│
 ├── .gitignore
 ├── LICENSE
 └── README.md
@@ -113,26 +257,25 @@ colectaapp/
 
 ## 🗓️ Plan de Trabajo
 
-| Entrega | Fecha | Alcance |
-|---|---|---|
-| **1.ª Entrega** | 30/08 | Propuesta del proyecto, definición de alcance (caso de uso escolar), stack tecnológico proyectado y repositorio único de GitHub con los tres integrantes como colaboradores. |
-| **2.ª Entrega** | 27/09 | Diseño y listado de módulos del backend, modelo de datos definitivo y cierre de las decisiones de diseño abiertas (ver más abajo). |
-| **Entrega Final** | 14/11 | Aplicación funcional desplegada (frontend en Netlify, backend en Render), documentación completa y defensa oral. |
+| Entrega           | Fecha | Alcance                                                                                                                                                                          |
+| ----------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1.ª Entrega**   | 30/08 | Propuesta del proyecto, definición de alcance (caso de uso escolar), stack tecnológico proyectado y repositorio único de GitHub con los tres integrantes como colaboradores.     |
+| **2.ª Entrega**   | 27/09 | Diseño y listado de módulos del backend, modelo de datos definitivo y cierre de las decisiones de diseño (ver "Esquema de la Base de Datos", "Módulos del Backend" y más abajo). |
+| **Entrega Final** | 14/11 | Aplicación funcional desplegada (frontend en Netlify, backend en Render), documentación completa y defensa oral.                                                                 |
 
-### Decisiones abiertas (a cerrar antes de la 2.ª Entrega)
+### Decisiones de diseño cerradas en la 2.ª Entrega
 
-* **Asignación del recaudador por colecta:** el rol de recaudador se habilita como condición general del participante, pero falta definir la regla puntual para cada colecta: si se sugiere automáticamente a partir de quien recibió la colecta anterior (sosteniendo la lógica de cadena circular) o si el administrador lo asigna manualmente entre los participantes habilitados.
-* **Alcance de las notificaciones:** confirmar si los recordatorios automáticos (vía mail o notificación) quedan dentro del MVP de la Entrega Final o se documentan como una ampliación futura.
+- **Asignación del recaudador por colecta:** la primera colecta del ciclo lectivo la organiza un participante voluntario (`es_primera_voluntaria: true`); si se postula más de uno, se asigna al que se postuló primero por orden cronológico. A partir de ahí, el padre cuyo hijo ya recibió la colecta anterior pasa a ser el `recaudador_id` de la colecta siguiente, sosteniendo la lógica de cadena circular. El padre beneficiario de una colecta no aporta económicamente a la colecta de su propio hijo.
+- **Alcance de las notificaciones:** quedan **fuera del MVP** de la Entrega Final y se documentan como ampliación futura (Módulo 7). El monto congelado y el CBU/alias del recaudador se muestran en pantalla, cubriendo la necesidad funcional sin sumar una dependencia externa de envío de mail/push al alcance del TIF.
 
 ---
 
 ## 👥 Integrantes
 
-| Nombre | Usuario de GitHub |
-|---|---|
-| Pablo De La Puente | https://github.com/JohnTheMano |
-| Eugenia Demarchi | https://github.com/EugeniaDemarchi |
-| Cintia García | https://github.com/Cigarcia1307 |
-
+| Nombre             | Usuario de GitHub                  |
+| ------------------ | ---------------------------------- |
+| Pablo De La Puente | https://github.com/JohnTheMano     |
+| Eugenia Demarchi   | https://github.com/EugeniaDemarchi |
+| Cintia García      | https://github.com/Cigarcia1307    |
 
 ---
