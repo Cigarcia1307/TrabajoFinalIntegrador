@@ -80,9 +80,12 @@ Cada objeto dentro de `aportes`:
 | Campo | Tipo | Descripción |
 |---|---|---|
 | `padre_id` | ObjectId (ref → `padres`) | Quién debe aportar |
+| `participa` | Boolean / null | `true` si decidió participar, `false` si decidió no participar, `null` si todavía no respondió |
 | `monto_pagado` | Number | Monto efectivamente pagado |
 | `fecha_pago` | String / null | Fecha del pago, o `null` si no pagó todavía |
 | `pagado` | Boolean | Estado del pago |
+
+> `participa` es un campo agregado en la 2.ª Entrega, aditivo sobre el esquema aprobado en el TP de Bases de Datos II (no modifica ni elimina campos existentes). Permite distinguir "decidió no participar" de "todavía no respondió", algo que antes solo se infería de la ausencia de la entrada en el array. Ver regla de visibilidad en la sección 4.
 
 **Ejemplo:**
 ```json
@@ -101,8 +104,8 @@ Cada objeto dentro de `aportes`:
   "es_primera_voluntaria": true,
   "indice_referencia": "nafta_ypf",
   "aportes": [
-    { "padre_id": { "$oid": "6a9dfd0ab9068acfd5061971" }, "monto_pagado": 12000, "fecha_pago": "2026-06-15", "pagado": true },
-    { "padre_id": { "$oid": "6a9dfd4ab9068acfd5061973" }, "monto_pagado": 0, "fecha_pago": null, "pagado": false }
+    { "padre_id": { "$oid": "6a9dfd0ab9068acfd5061971" }, "participa": true, "monto_pagado": 12000, "fecha_pago": "2026-06-15", "pagado": true },
+    { "padre_id": { "$oid": "6a9dfd4ab9068acfd5061973" }, "participa": false, "monto_pagado": 0, "fecha_pago": null, "pagado": false }
   ]
 }
 ```
@@ -156,6 +159,12 @@ La propuesta original (1.ª entrega) dejaba pendiente de definición **quién es
 
 Este criterio se refleja en los 3 documentos de ejemplo cargados en `colecta_cumpleanos`.
 
+Además, en esta entrega se definió **quién puede ver el array `aportes` completo de una colecta**:
+
+- Dentro de una colecta puntual, cada participante solo puede ver su propia entrada dentro de `aportes` (su `participa` y su `pagado`).
+- El `recaudador_id` de esa colecta es el único que puede ver el array completo (todos los `participa` y `pagado` de todos los padres) y un resumen agregado (recaudado vs. `monto_total_objetivo`, cantidad de pendientes).
+- Es una sola regla de autorización a nivel de recurso — se compara el `_id` de quien pide los datos contra el `recaudador_id` de esa colecta, no contra un rol genérico (`ADMINISTRADOR`/`PARTICIPANTE`) — y se aplica siempre del lado del backend. De paso resuelve que no se pueda deducir por eliminación quién decidió no participar.
+
 ---
 
 ## 5. Datos de prueba cargados
@@ -167,3 +176,4 @@ Este criterio se refleja en los 3 documentos de ejemplo cargados en `colecta_cum
 | `precio_referencia` | 4 (nafta x2 fechas, dólar MEP, cajita feliz) |
 
 Los archivos de exportación (`padres.json`, `colecta_cumpleanos.json`, `precio_referencia.json`) se incluyen en la carpeta `/database` del repositorio como respaldo de estos datos de ejemplo.
+
