@@ -66,7 +66,7 @@ El desarrollo aborda los siguientes desafíos de ingeniería de software:
 
 ## 🗂️ Esquema de la Base de Datos
 
-Modelo documental en MongoDB Atlas, diseñado y aprobado en la cátedra de Bases de Datos II, sin modificaciones para esta entrega: tres colecciones — `padres` (con `hijos` embebidos), `colecta_cumpleanos` (con `aportes` embebidos) y `precio_referencia`. Detalle completo de campos, justificación de embedding/linking y datos de ejemplo en [`basedatosTPF/esquema_base_datos.md`](./basedatosTPF/esquema_base_datos.md).
+Modelo documental en MongoDB Atlas, diseñado y aprobado en la cátedra de Bases de Datos II, actualizado de forma aditiva para esta entrega: tres colecciones — `padres` (con `hijos` embebidos), `colecta_cumpleanos` (con `aportes` embebidos) y `precio_referencia`. Detalle completo de campos, justificación de embedding/linking y datos de ejemplo en [`database/esquema_base_datos.md`](database/esquema_base_datos.md).
 
 ```mermaid
 erDiagram
@@ -196,7 +196,11 @@ GET    /api/colectas/{id}/resumen               # solo recaudador: recaudado vs.
 
 ### Responsables por módulo
 
-Reparto de horas y checklist de avance por persona: ver [`PLAN_DE_TRABAJO.md`](./PLAN_DE_TRABAJO.md).
+
+- **Eugenia:** Arquitectura del frontend, Aportes y Pagos e Índices de Referencia.
+- **Cintia:** Colectas y Participantes.
+- **Pablo:** Autenticación y Roles, Congelamiento de Montos y pulido de la interfaz de usuario (UI).
+
 
 ---
 
@@ -230,9 +234,8 @@ Reparto de horas y checklist de avance por persona: ver [`PLAN_DE_TRABAJO.md`](.
 ```text
 colectaapp/
 │
-├── frontend/              # React + TypeScript
-│   ├── src/
-│   └── public/
+├── frontend/              # React + TypeScript (pendiente de desarrollo)
+│   └── .gitkeep
 │
 ├── backend/               # Java + Spring Boot
 │   ├── src/
@@ -240,16 +243,18 @@ colectaapp/
 │   │   └── test/
 │   └── build.gradle
 │
-├── basedatosTPF/          # Esquema de datos y exports de ejemplo (Mongo)
+├── database/          # Esquema de datos y exports de ejemplo (Mongo)
 │   ├── esquema_base_datos.md
 │   ├── gestion_cumpleanos.padres.json
 │   ├── gestion_cumpleanos.colecta_cumpleanos.json
 │   └── gestion_cumpleanos.precio_referencia.json
 │
+├── docs/
+│   ├── listado-modulos.md
+│   └── arquitectura.md
+│
 ├── .gitignore
-├── LICENSE
 └── README.md
-```
 
 ---
 

@@ -177,3 +177,21 @@ Además, en esta entrega se definió **quién puede ver el array `aportes` compl
 
 Los archivos de exportación (`padres.json`, `colecta_cumpleanos.json`, `precio_referencia.json`) se incluyen en la carpeta `/database` del repositorio como respaldo de estos datos de ejemplo.
 
+---
+
+## 6. Índices principales
+
+Para optimizar las consultas más frecuentes del sistema se definen los siguientes índices:
+
+### Colección `padres`
+- `email`: índice único para evitar usuarios duplicados y facilitar la búsqueda durante el inicio de sesión.
+- `activo`: facilita la consulta de participantes activos.
+
+### Colección `colecta_cumpleanos`
+- `ciclo_lectivo`: facilita la búsqueda de colectas correspondientes a un ciclo determinado.
+- `recaudador_id`: facilita la consulta de las colectas asignadas a cada recaudador.
+- `padre_id`: facilita la búsqueda de colectas asociadas a un participante.
+- `fecha_cumpleanos`: facilita el ordenamiento y búsqueda de colectas por fecha.
+
+### Colección `precio_referencia`
+- Índice compuesto por `indice` y `fecha`: permite obtener rápidamente la cotización de un índice para una fecha determinada.
