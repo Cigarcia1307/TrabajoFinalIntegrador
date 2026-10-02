@@ -14,6 +14,28 @@ La aplicación estará dividida principalmente en:
 La comunicación entre el frontend y el backend se realizará mediante peticiones HTTP
 a una API REST, utilizando JSON para el intercambio de datos.
 
+## Organización del Frontend
+
+El frontend, desarrollado con React + TypeScript sobre Vite, se organiza por módulos
+funcionales, en espejo con los módulos del backend:
+
+- **app/:** configuración de rutas (React Router) y layout principal (encabezado y navegación).
+- **features/:** una carpeta por módulo (auth, participantes, colectas, indices,
+  congelamiento, aportes), cada una con sus pantallas y componentes propios.
+- **components/ui/:** componentes base reutilizables del sistema de diseño (botones,
+  cards, estados), compartidos por todos los módulos.
+- **services/:** cliente de la API REST y datos de prueba (mocks) que respetan el
+  contrato de endpoints, para desarrollar el frontend antes de tener el backend.
+- **styles/tokens.css:** tokens de diseño (colores, tipografía, radios, sombras).
+
+### Estilado con Tailwind CSS
+
+El estilado se resuelve con **Tailwind CSS v4**: cada componente declara sus estilos
+mediante clases utilitarias, sin archivos CSS por componente. Las clases disponibles
+se generan a partir de los tokens definidos en `styles/tokens.css`, y la paleta por
+defecto de Tailwind está desactivada, de modo que solo pueden usarse los valores del
+sistema de diseño. El detalle de uso está en `docs/diseno.md`.
+
 ## Organización del Backend
 
 El backend desarrollado con Java y Spring Boot seguirá una separación por capas:
@@ -31,6 +53,11 @@ facilitando las pruebas, el mantenimiento y futuras modificaciones.
 | Componente | Tecnología |
 |---|---|
 | Frontend | React + TypeScript |
+| Build del frontend | Vite |
+| Estilos | Tailwind CSS v4 |
+| Navegación | React Router |
+| Íconos | Lucide |
+| Calidad de código (frontend) | ESLint |
 | Backend | Java + Spring Boot |
 | Gestor de dependencias | Gradle |
 | API | REST |
@@ -45,6 +72,22 @@ facilitando las pruebas, el mantenimiento y futuras modificaciones.
 Se eligió React para desarrollar una interfaz web basada en componentes reutilizables.
 TypeScript permite agregar tipado al código JavaScript y facilita la detección de errores
 durante el desarrollo.
+
+### Vite
+Se utiliza como herramienta de construcción del frontend: ofrece un servidor de desarrollo
+con recarga instantánea y genera una versión optimizada para el despliegue en Netlify.
+
+### Tailwind CSS
+Se eligió Tailwind CSS para que el estilado sea modular: los estilos se escriben junto a cada
+componente mediante clases utilitarias, en lugar de hojas de estilo separadas que crecen y se
+superponen. Los colores, la tipografía y las formas se definen una sola vez como tokens de
+diseño, y Tailwind genera las clases a partir de ellos. Esto mantiene la coherencia visual
+aunque cada integrante desarrolle pantallas distintas, y facilita cumplir los criterios de
+accesibilidad (contraste) definidos en el sistema de diseño.
+
+### React Router y Lucide
+React Router gestiona la navegación entre pantallas. Lucide provee un set único de íconos
+con estilo homogéneo.
 
 ### Java + Spring Boot
 Java permite aplicar los conceptos de programación orientada a objetos trabajados durante
@@ -77,7 +120,7 @@ La arquitectura puede representarse de forma simplificada de la siguiente manera
 
 Usuario
 ↓
-Frontend (React + TypeScript)
+Frontend (React + TypeScript + Tailwind CSS)
 ↓
 API REST / HTTP / JSON
 ↓

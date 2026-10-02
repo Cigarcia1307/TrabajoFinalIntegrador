@@ -1,0 +1,92 @@
+/*
+ * ColectaApp — Tokens de diseño (paleta "Confeti")
+ * Tailwind CSS v4: los tokens se declaran con @theme y generan las utilidades.
+ * Importar UNA sola vez, desde src/index.css:  @import "./styles/tokens.css";
+ * Reglas de uso: docs/diseno.md
+ */
+
+@import "tailwindcss";
+
+@theme {
+  /* ── Reset: solo existen los colores, sombras y tamaños de texto definidos acá.
+        Así nadie puede usar bg-red-500 o text-sm por fuera del sistema. ── */
+  --color-*: initial;
+  --shadow-*: initial;
+  --text-*: initial;
+
+  /* ── Tipografía ── */
+  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+
+  /* Escala acotada: 7 tamaños. Uso: text-caption, text-body, text-monto, etc. */
+  --text-caption: 0.8125rem;   /* 13px — etiquetas, metadatos */
+  --text-caption--line-height: 1.4;
+  --text-body: 1rem;           /* 16px — texto general */
+  --text-body--line-height: 1.6;
+  --text-lead: 1.125rem;       /* 18px — destacados, botones grandes */
+  --text-lead--line-height: 1.5;
+  --text-h3: 1.25rem;          /* 20px */
+  --text-h3--line-height: 1.35;
+  --text-h2: 1.5rem;           /* 24px */
+  --text-h2--line-height: 1.3;
+  --text-h1: 1.875rem;         /* 30px */
+  --text-h1--line-height: 1.2;
+  --text-monto: 2rem;          /* 32px — montos principales; usar siempre con tabular-nums */
+  --text-monto--line-height: 1.1;
+
+  /* ── Base ── */
+  --color-white: #ffffff;
+  --color-crema: #fff8f0;          /* fondo general de la app */
+  --color-superficie: #ffffff;     /* cards y paneles */
+  --color-borde: #e8ded5;          /* divisores decorativos (NO para inputs) */
+  --color-borde-control: #958679;  /* borde de inputs y checkboxes — 3,34:1 sobre crema */
+
+  /* ── Texto y acción (la tinta es el color de acción) ── */
+  --color-tinta: #2e2724;          /* texto principal + botón primario — 13,92:1 */
+  --color-tinta-hover: #4a403b;    /* hover del primario — blanco encima 10,06:1 */
+  --color-texto-suave: #6e625b;    /* texto secundario — 5,60:1 */
+
+  /* ── Confeti: identidad y color de cada cumpleañero ──
+        SOLO decorativo: avatares, bordes de card, ilustraciones, rueda.
+        Texto encima: siempre tinta (todas ≥ 6,3:1). Nunca como texto ni como estado. */
+  --color-confeti-mostaza: #ffc233;
+  --color-confeti-turquesa: #2ec4b6;
+  --color-confeti-coral: #ff8a65;
+  --color-confeti-lila: #b39dff;
+  --color-confeti-cielo: #7cc4f8;
+
+  /* ── Estados (texto / fondo). Siempre icono + texto, nunca color solo ── */
+  --color-pagado: #1f7a4a;
+  --color-pagado-bg: #e3f5ea;          /* 4,70:1 */
+  --color-pendiente: #8a5300;
+  --color-pendiente-bg: #fff0c7;       /* 5,59:1 */
+  --color-congelado: #23628f;
+  --color-congelado-bg: #e4eff8;       /* 5,60:1 */
+  --color-no-participa: #5f5a56;
+  --color-no-participa-bg: #efebe7;    /* 5,74:1 */
+  --color-error: #b3202f;
+  --color-error-bg: #fde8ea;           /* 5,66:1 */
+
+  /* ── Formas ── */
+  --radius-control: 0.875rem;  /* inputs, selects — rounded-control */
+  --radius-card: 1.25rem;      /* cards — rounded-card */
+  --radius-panel: 1.75rem;     /* contenedores grandes, modales — rounded-panel */
+  /* Botones y pills: rounded-full (ya existe en Tailwind) */
+
+  /* ── Sombras: solo dos niveles ── */
+  --shadow-sutil: 0 1px 2px rgb(46 39 36 / 0.06), 0 1px 3px rgb(46 39 36 / 0.04);
+  --shadow-elevado: 0 8px 24px rgb(46 39 36 / 0.10), 0 2px 6px rgb(46 39 36 / 0.06);
+
+  /* Espaciado: se mantiene el de Tailwind (múltiplos de 4px: p-2 = 8px, p-4 = 16px). */
+}
+
+@layer base {
+  body {
+    @apply bg-crema text-tinta font-sans text-body antialiased;
+  }
+
+  /* Foco visible y consistente en toda la app (teclado) */
+  :focus-visible {
+    outline: 2px solid var(--color-tinta);
+    outline-offset: 3px;
+  }
+}
