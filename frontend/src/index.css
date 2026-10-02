@@ -1,0 +1,7 @@
+/*
+ * Punto de entrada de estilos de toda la app.
+ * No agregar CSS acá: los estilos se escriben con clases de Tailwind en cada
+ * componente, y los valores (colores, tipografía, radios) salen de tokens.css.
+ * Guía: docs/diseno.md
+ */
+@import "./styles/tokens.css";

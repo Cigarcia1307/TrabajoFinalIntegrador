@@ -209,6 +209,11 @@ GET    /api/colectas/{id}/resumen               # solo recaudador: recaudado vs.
 | Componente | Tecnología / Proveedor | Descripción |
 |---|---|---|
 | **Frontend** | React + TypeScript | Permite desarrollar rápidamente una interfaz web modular y tiene abundante documentación y recursos disponibles. |
+| **Build del frontend** | Vite | Servidor de desarrollo instantáneo y empaquetado optimizado para producción. |
+| **Estilos** | Tailwind CSS v4 | Estilado modular con clases utilitarias dentro de cada componente, generado a partir de tokens de diseño propios (colores, tipografía, radios). Garantiza consistencia visual entre los integrantes: solo se pueden usar los valores del sistema de diseño. Ver [`docs/diseno.md`](docs/diseno.md). |
+| **Navegación** | React Router | Manejo de rutas y pantallas del frontend. |
+| **Íconos** | Lucide | Set único de íconos outline, consistente en toda la interfaz. |
+| **Calidad de código (frontend)** | ESLint | Detecta errores y malas prácticas, incluidas las reglas de React Hooks. |
 | **Backend** | Java + Spring Boot | Permite mantener Java y aplicar POO. Spring Data MongoDB facilita la integración del backend con MongoDB. |
 | **Gestor de dependencias** | Gradle | Permite gestionar las dependencias y automatizar la construcción del proyecto de forma sencilla. |
 | **API** | REST | Enfoque simple y ampliamente utilizado para comunicar frontend y backend mediante HTTP y JSON. |
@@ -234,8 +239,14 @@ GET    /api/colectas/{id}/resumen               # solo recaudador: recaudado vs.
 ```text
 colectaapp/
 │
-├── frontend/              # React + TypeScript (pendiente de desarrollo)
-│   └── .gitkeep
+├── frontend/              # React + TypeScript + Vite + Tailwind CSS
+│   ├── src/
+│   │   ├── app/           # Router y layout principal
+│   │   ├── components/ui/ # Componentes base del sistema de diseño
+│   │   ├── features/      # Un módulo por carpeta (auth, colectas, aportes…)
+│   │   └── styles/        # tokens.css: tokens de diseño para Tailwind
+│   ├── package.json
+│   └── vite.config.ts
 │
 ├── backend/               # Java + Spring Boot
 │   ├── src/
@@ -251,10 +262,12 @@ colectaapp/
 │
 ├── docs/
 │   ├── listado-modulos.md
-│   └── arquitectura.md
+│   ├── arquitectura.md
+│   └── diseno.md          # Sistema de diseño y uso de Tailwind
 │
 ├── .gitignore
 └── README.md
+```
 
 ---
 
