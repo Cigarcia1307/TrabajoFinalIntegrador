@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 @Data
 @NoArgsConstructor
@@ -12,5 +13,8 @@ import java.time.LocalDate;
 public class Beneficiario {
 
     private String nombre;
+
+    @Field("fecha_nacimiento")
     private LocalDate fechaNacimiento;
+
 }
