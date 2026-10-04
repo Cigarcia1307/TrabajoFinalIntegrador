@@ -1,3 +1,6 @@
 spring:
   application:
     name: backend
+  mongodb:
+    uri: ${MONGODB_URI}
+    database: gestion_cumpleanos
