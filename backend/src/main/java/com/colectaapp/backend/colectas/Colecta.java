@@ -24,7 +24,7 @@ public class Colecta {
     @Field("fecha_cumpleanos")
     private LocalDate fechaCumpleanos;
 
-    @Field("monto_individual_peses")
+    @Field("monto_individual_pesos")
     private double montoIndividualPesos;
 
     @Field("monto_total_objetivo")
