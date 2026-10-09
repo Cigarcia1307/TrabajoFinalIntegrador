@@ -1,0 +1,138 @@
+/**
+ * Contrato de la API REST de ColectaApp, visto desde el frontend.
+ *
+ * Los nombres de campo están en camelCase porque así los devuelve Spring Boot
+ * (Jackson serializa los atributos Java; los @Field de Mongo no afectan al JSON).
+ * Fuente: backend/src/main/java/com/colectaapp/backend/** y database/esquema_base_datos.md
+ *
+ * Las fechas viajan como texto ISO: "2026-10-09".
+ */
+
+// ── Módulo 1 · Autenticación y Roles ────────────────────────────────────────
+
+/** Roles de acceso. "Recaudador" NO es un rol: se resuelve por colecta (recaudadorId). */
+export type Rol = 'ADMINISTRADOR' | 'PARTICIPANTE'
+
+/** Respuesta de GET /api/auth/me */
+export interface UsuarioActual {
+  id: string // mismo id que el Participante
+  nombre: string
+  apellido: string
+  email: string
+  rol: Rol
+}
+
+// ── Módulo 2 · Participantes ────────────────────────────────────────────────
+
+/** Hijo/a embebido en el participante (Beneficiario.java). */
+export interface Beneficiario {
+  // Pendiente en el backend: hoy Beneficiario no tiene id. Ver lib/beneficiario.ts
+  nombre: string
+  fechaNacimiento: string
+}
+
+/** Participante.java — colección `padres` */
+export interface Participante {
+  id: string
+  nombre: string
+  apellido: string
+  email: string
+  telefono: string
+  cbuAlias: string
+  activo: boolean
+  hijos: Beneficiario[]
+}
+
+// ── Módulo 3 · Colectas ─────────────────────────────────────────────────────
+
+export type EstadoColecta = 'en_recaudacion' | 'cerrada'
+
+/** CicloLectivo.java */
+export interface CicloLectivo {
+  id: string
+  anio: number
+  activo: boolean
+}
+
+/** Colecta.java — colección `colecta_cumpleanos` (sin el array de aportes). */
+export interface Colecta {
+  id: string
+  cicloLectivo: number
+  fechaCumpleanos: string
+  /** 0 mientras no se congeló el monto (Módulo 5). */
+  montoIndividualPesos: number
+  montoTotalObjetivo: number
+  estadoColecta: EstadoColecta
+  activo: boolean
+  beneficiarioNombre: string
+  esPrimeraVoluntaria: boolean
+  indiceReferencia: IndiceId
+  ordenEnLaRueda: number
+  /** Padre del cumpleañero */
+  padreId: string
+  recaudadorId: string
+}
+
+// ── Módulo 4 · Índices de Referencia ────────────────────────────────────────
+
+export type IndiceId = 'nafta_ypf' | 'dolar_mep' | 'cajita_feliz'
+
+/** Respuesta de GET /api/indices */
+export interface Indice {
+  id: IndiceId
+  nombre: string // "Nafta súper YPF"
+  unidad: string // "litro"
+  unidadPlural: string // "litros"
+  /**
+   * Cuántas unidades aporta cada participante (ej. 5 litros).
+   * ⚠️ Todavía no está en el esquema de la base: hay que definir dónde se guarda.
+   */
+  cantidadPorParticipante: number
+  votos: number
+}
+
+/** Respuesta de GET /api/indices/{indice}/cotizacion-actual */
+export interface Cotizacion {
+  indice: IndiceId
+  fecha: string
+  valorUnitarioArs: number
+}
+
+// ── Módulo 5 · Congelamiento de Montos ──────────────────────────────────────
+
+/** PrecioReferencia — colección `precio_referencia` */
+export interface PrecioReferencia {
+  id: string
+  indice: IndiceId
+  fecha: string
+  valorUnitarioArs: number
+}
+
+// ── Módulo 6 · Aportes y Pagos ──────────────────────────────────────────────
+
+/** Entrada del array `aportes` embebido en cada colecta. */
+export interface Aporte {
+  padreId: string
+  /** true: participa · false: decidió no participar · null: todavía no respondió */
+  participa: boolean | null
+  montoPagado: number
+  fechaPago: string | null
+  pagado: boolean
+}
+
+/** Cuerpo de PATCH /api/colectas/{id}/aportes/{padreId} */
+export interface CambioAporte {
+  participa?: boolean
+  pagado?: boolean
+}
+
+/** Respuesta de GET /api/colectas/{id}/resumen — solo para el recaudador */
+export interface ResumenColecta {
+  colectaId: string
+  recaudado: number
+  montoTotalObjetivo: number
+  cantidadParticipan: number
+  cantidadPagaron: number
+  cantidadPendientes: number
+  cantidadSinResponder: number
+}
