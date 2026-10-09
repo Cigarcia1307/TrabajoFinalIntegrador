@@ -68,7 +68,7 @@ Reglas:
 - **Solo decorativos:** avatar del cumpleañero, borde superior de su card, ilustraciones, rueda de colectas.
 - **Texto encima: siempre `text-tinta`** (todas las combinaciones superan 6,3:1).
 - **Nunca** como color de texto, de botón ni de estado.
-- El color de cada cumpleañero se obtiene con `colorCumpleanero(beneficiario._id)` de `src/lib/confeti.ts`. No elegirlo a mano.
+- El color de cada cumpleañero sale de **su lugar en la rueda** (`colecta.ordenEnLaRueda`): 1 mostaza, 2 turquesa, 3 coral, 4 lila, 5 cielo, y vuelve a empezar. Así dos cumpleaños consecutivos nunca comparten color. Se obtiene con `colorCumpleanero(orden)` de `src/lib/confeti.ts`; no elegirlo a mano.
 
 ### Estados
 
@@ -132,13 +132,13 @@ import { formatearARS } from '../../../lib/formato'
 <Boton variante="texto">No participo esta vez</Boton>
 
 // Card de un cumpleañero: el borde superior toma su color confeti
-<Card beneficiarioId={beneficiario._id} elevada>…</Card>
+<Card ordenEnLaRueda={colecta.ordenEnLaRueda} elevada>…</Card>
 
 // Estado: siempre con ícono + texto
 <PillEstado estado="pendiente" />
 
 // Avatar del cumpleañero (en gris si su cumpleaños ya pasó)
-<AvatarCumpleanero beneficiarioId={b._id} nombre={b.nombre} pasado={yaFue} />
+<AvatarCumpleanero ordenEnLaRueda={colecta.ordenEnLaRueda} nombre={colecta.beneficiarioNombre} pasado={yaFue} />
 
 // Monto
 <p className="text-monto font-extrabold tabular-nums">{formatearARS(monto)}</p>

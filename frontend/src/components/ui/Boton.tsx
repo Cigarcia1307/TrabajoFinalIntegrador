@@ -10,12 +10,12 @@ interface BotonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const base =
-  'inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-6 font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50'
+  'inline-flex min-h-12 items-center justify-center gap-2 rounded-full font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50'
 
 const variantes: Record<Variante, string> = {
-  primario: 'bg-tinta text-white hover:bg-tinta-hover',
-  secundario: 'border-2 border-tinta text-tinta hover:bg-tinta/5',
-  texto: 'text-tinta underline underline-offset-4 hover:bg-tinta/5',
+  primario: 'bg-tinta px-6 text-white hover:bg-tinta-hover',
+  secundario: 'border-2 border-tinta px-6 text-tinta hover:bg-tinta/5',
+  texto: 'px-2 text-tinta underline underline-offset-4 hover:bg-tinta/5',
 }
 
 export function Boton({

@@ -15,3 +15,15 @@ const fechaCorta = new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-
 export function formatearFechaCorta(fechaISO: string): string {
   return fechaCorta.format(new Date(`${fechaISO}T12:00:00`))
 }
+
+const fechaLarga = new Intl.DateTimeFormat('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
+
+/** "2026-10-09" → "viernes 9 de octubre" */
+export function formatearFechaLarga(fechaISO: string): string {
+  return fechaLarga.format(new Date(`${fechaISO}T12:00:00`))
+}
+
+/** 5, "litro", "litros" → "5 litros" · 1 → "1 litro" */
+export function cantidadConUnidad(cantidad: number, singular: string, plural: string): string {
+  return `${cantidad} ${cantidad === 1 ? singular : plural}`
+}

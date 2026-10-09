@@ -1,4 +1,5 @@
 import { createBrowserRouter } from 'react-router'
+import { MisAportesPage } from '../features/aportes/pages/MisAportesPage'
 import { LoginPage } from '../features/auth/pages/LoginPage'
 import { ColectasPage } from '../features/colectas/pages/ColectasPage'
 import { InicioPage } from '../features/colectas/pages/InicioPage'
@@ -23,6 +24,7 @@ export const router = createBrowserRouter([
       { path: 'colectas', element: <ColectasPage /> },
       { path: 'grupo', element: <GrupoPage /> },
       { path: 'perfil', element: <PerfilPage /> },
+      { path: 'aportes', element: <MisAportesPage /> },
       // Guía viva del sistema de diseño: para revisar componentes y tokens.
       { path: 'diseno', element: <GuiaDisenoPage /> },
     ],
