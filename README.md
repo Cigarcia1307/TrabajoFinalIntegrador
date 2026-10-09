@@ -96,6 +96,7 @@ erDiagram
         number orden_en_la_rueda
         boolean es_primera_voluntaria
         string indice_referencia
+        number cantidad_unidades "se fija al congelar"
         boolean activo
     }
     APORTES {
@@ -110,15 +111,39 @@ erDiagram
         date fecha
         number valor_unitario_ars
     }
+    VOTACION_INDICE {
+        ObjectId _id
+        number ciclo_lectivo
+        string estado "abierta, vigente o reemplazada"
+        ObjectId creada_por
+        date fecha_apertura
+        date fecha_cierre
+        string indice_elegido
+        number cantidad_unidades
+    }
+    OPCIONES {
+        string indice
+        number cantidad_unidades
+    }
+    VOTOS {
+        ObjectId padre_id
+        string indice
+        date fecha
+    }
 
     PADRES ||--o{ HIJOS : "embebe (array hijos)"
     PADRES ||--o{ COLECTA_CUMPLEANOS : "beneficiario (padre_id)"
     PADRES ||--o{ COLECTA_CUMPLEANOS : "recaudador (recaudador_id)"
     COLECTA_CUMPLEANOS ||--o{ APORTES : "embebe (array aportes)"
     PADRES ||--o{ APORTES : "aporta (padre_id)"
+    VOTACION_INDICE ||--|{ OPCIONES : "embebe (array opciones)"
+    VOTACION_INDICE ||--o{ VOTOS : "embebe (array votos)"
+    PADRES ||--o{ VOTOS : "vota (padre_id)"
 ```
 
 > La relación entre `precio_referencia.indice` y `colecta_cumpleanos.indice_referencia` es lógica (por string), no por ObjectId, y no se representa arriba por no ser una referencia formal de la base.
+
+> `votacion_indice` y `colecta_cumpleanos.cantidad_unidades` también son extensiones aditivas: guardan cuántas unidades del índice aporta cada participante (ej. 5 litros de nafta) y permiten cambiar el índice o la cantidad durante el año con una nueva votación. El índice y la cantidad se copian a cada colecta al congelar su monto, así un cambio no afecta a las colectas ya congeladas o cobradas. Detalle en [`database/esquema_base_datos.md`](database/esquema_base_datos.md) (secciones 2.4 y 4).
 
 > El campo `participa` en `aportes[]` es una extensión aditiva sobre el esquema ya aprobado en Bases de Datos II (no modifica ni elimina campos existentes): permite distinguir "decidió no participar" de "todavía no respondió", algo que antes solo se infería de la ausencia de la entrada.
 
@@ -164,16 +189,20 @@ GET    /api/colectas/{id}/recaudador
 > El `recaudador_id` que asigna este módulo es la base del chequeo de autorización del Módulo 6: quién puede ver el estado de todos los aportes de una colecta se resuelve comparando el usuario logueado contra este campo, no con el rol genérico de JWT.
 
 ### Módulo 4 · Índices de Referencia (patrón Strategy)
-Resuelve la cotización de cada índice sin acoplar el servicio de colectas a uno en particular. El índice se fija por votación entre los participantes al invitarse.
-**Clases:** `CotizacionStrategy` (interfaz), `NaftaYpfStrategy`, `DolarMepStrategy`, `CajitaFelizStrategy`, `IndiceReferenciaController`, `VotacionIndiceService`.
+Resuelve la cotización de cada índice sin acoplar el servicio de colectas a uno en particular. El índice **y la cantidad de unidades** por participante (ej. 5 litros de nafta) se fijan por votación de todos los participantes al inicio del ciclo lectivo. Para cambiarlos durante el año se abre una nueva votación; el cambio aplica a las colectas que todavía no se congelaron (ver Módulo 5).
+**Clases:** `CotizacionStrategy` (interfaz), `NaftaYpfStrategy`, `DolarMepStrategy`, `CajitaFelizStrategy`, `VotacionIndice`, `IndiceReferenciaController`, `VotacionIndiceService`.
 ```
-GET    /api/indices
-POST   /api/indices/votar
+GET    /api/indices                            # catálogo de índices (nombre y unidad)
+GET    /api/indices/vigente                    # índice y cantidad de unidades que se aplican hoy
+GET    /api/indices/votacion                   # votación abierta: opciones, resultados y mi voto (204 si no hay)
+POST   /api/indices/votacion                   # solo ADMINISTRADOR: abre una votación nueva con sus opciones
+POST   /api/indices/votar                      # un voto por participante (409 si ya votó)
+POST   /api/indices/votacion/cerrar            # solo ADMINISTRADOR: la más votada pasa a vigente
 GET    /api/indices/{indice}/cotizacion-actual
 ```
 
 ### Módulo 5 · Congelamiento de Montos
-Scheduler/Cron Job que fija el valor en pesos el día hábil previo a cada colecta, persistiéndolo en `precio_referencia` y en `monto_individual_pesos`.
+Scheduler/Cron Job que fija el valor en pesos el día hábil previo a cada colecta, persistiéndolo en `precio_referencia` y en `monto_individual_pesos`. En ese mismo momento copia a la colecta el `indice_referencia` y la `cantidad_unidades` de la votación vigente (Módulo 4): `monto_individual_pesos = cantidad_unidades × valor_unitario_ars`.
 **Clases:** `CongelamientoScheduler`, `PrecioReferencia`, `CongelamientoService`.
 ```
 GET    /api/precios-referencia?indice=nafta_ypf&fecha=2026-06-29
