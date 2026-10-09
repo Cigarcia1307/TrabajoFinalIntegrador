@@ -74,7 +74,7 @@ function Monto({ datos }: { datos: DatosMiAporte }) {
       <p className="text-caption text-texto-suave">Tu aporte</p>
       <p className="text-monto font-extrabold tabular-nums">{formatearARS(datos.monto)}</p>
       <p className="text-caption text-texto-suave">
-        {cantidadConUnidad(indice.cantidadPorParticipante, indice.unidad, indice.unidadPlural)} de {indice.nombre}
+        {cantidadConUnidad(datos.cantidadUnidades, indice.unidad, indice.unidadPlural)} de {indice.nombre}
         {datos.fechaEstimacion &&
           ` · estimado con el valor del ${formatearFechaCorta(datos.fechaEstimacion)}; se congela el día hábil anterior al cumple`}
       </p>

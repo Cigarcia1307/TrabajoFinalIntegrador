@@ -5,11 +5,12 @@ import {
   listarIndices,
   obtenerColecta,
   obtenerCotizacionActual,
+  obtenerIndiceVigente,
   obtenerMiAporte,
   obtenerParticipante,
   obtenerUsuarioActual,
 } from '../../../services'
-import type { Aporte, Colecta, Indice, Participante, UsuarioActual } from '../../../types/api'
+import type { Aporte, Colecta, Indice, IndiceId, Participante, UsuarioActual } from '../../../types/api'
 
 export interface DatosMiAporte {
   usuario: UsuarioActual
@@ -17,6 +18,8 @@ export interface DatosMiAporte {
   /** null si el usuario es el padre del cumpleañero (no aporta a su propia colecta). */
   aporte: Aporte | null
   indice: Indice
+  /** Unidades por participante: las congeladas en la colecta, o las vigentes si todavía no se congeló. */
+  cantidadUnidades: number
   recaudador: Participante
   /** Monto a mostrar: el congelado, o una estimación con la cotización de hoy. */
   monto: number
@@ -36,30 +39,40 @@ async function cargar(colectaId: string): Promise<DatosMiAporte> {
     obtenerColecta(colectaId),
     listarIndices(),
   ])
-  const indice = indices.find((i) => i.id === colecta.indiceReferencia)
-  if (!indice) throw new Error('No se encontró el índice de referencia de la colecta')
 
   const [aporte, recaudador] = await Promise.all([
     obtenerMiAporte(colectaId, usuario.id),
     obtenerParticipante(colecta.recaudadorId),
   ])
 
+  // Congelada: el índice, la cantidad y el monto ya quedaron fijos en la colecta.
   const congelado = estaCongelado(colecta.montoIndividualPesos)
   if (congelado) {
-    return { usuario, colecta, aporte, indice, recaudador, monto: colecta.montoIndividualPesos, congelado, fechaEstimacion: null }
+    const indice = buscarIndice(indices, colecta.indiceReferencia)
+    const cantidadUnidades = colecta.cantidadUnidades ?? 0
+    return { usuario, colecta, aporte, indice, cantidadUnidades, recaudador, monto: colecta.montoIndividualPesos, congelado, fechaEstimacion: null }
   }
 
-  const cotizacion = await obtenerCotizacionActual(indice.id)
+  // Sin congelar: rige lo vigente hoy (si cambia por votación, esta colecta lo toma).
+  const vigente = await obtenerIndiceVigente()
+  const cotizacion = await obtenerCotizacionActual(vigente.indice)
   return {
     usuario,
     colecta,
     aporte,
-    indice,
+    indice: buscarIndice(indices, vigente.indice),
+    cantidadUnidades: vigente.cantidadUnidades,
     recaudador,
-    monto: indice.cantidadPorParticipante * cotizacion.valorUnitarioArs,
+    monto: vigente.cantidadUnidades * cotizacion.valorUnitarioArs,
     congelado,
     fechaEstimacion: cotizacion.fecha,
   }
+}
+
+function buscarIndice(indices: Indice[], id: IndiceId): Indice {
+  const indice = indices.find((i) => i.id === id)
+  if (!indice) throw new Error('No se encontró el índice de referencia de la colecta')
+  return indice
 }
 
 /**
