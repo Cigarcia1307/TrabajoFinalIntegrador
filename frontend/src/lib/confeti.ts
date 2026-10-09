@@ -1,5 +1,5 @@
 /**
- * Asigna a cada cumpleañero (beneficiario) un color "confeti" estable.
+ * Asigna a cada cumpleañero un color "confeti" estable.
  *
  * IMPORTANTE (Tailwind): las clases tienen que aparecer COMPLETAS en el código.
  * Tailwind escanea el texto de los archivos; si armás la clase con un template
@@ -18,13 +18,12 @@ export const CONFETI = [
 export type ColorConfeti = (typeof CONFETI)[number];
 
 /**
- * Mismo id → mismo color, siempre (en cualquier pantalla y para cualquier usuario).
- * Recibe el _id del beneficiario que viene de la API.
+ * El color de cada cumpleañero sale de su lugar en la rueda (colecta.ordenEnLaRueda):
+ * 1 → mostaza, 2 → turquesa, 3 → coral, 4 → lila, 5 → cielo, 6 → mostaza…
+ * Así dos cumpleaños consecutivos nunca comparten color, y cada chico
+ * conserva el suyo durante todo el ciclo, en todas las pantallas.
  */
-export function colorCumpleanero(beneficiarioId: string): ColorConfeti {
-  let hash = 0;
-  for (let i = 0; i < beneficiarioId.length; i++) {
-    hash = (hash * 31 + beneficiarioId.charCodeAt(i)) >>> 0;
-  }
-  return CONFETI[hash % CONFETI.length];
+export function colorCumpleanero(ordenEnLaRueda: number): ColorConfeti {
+  const posicion = Math.max(ordenEnLaRueda, 1) - 1;
+  return CONFETI[posicion % CONFETI.length];
 }

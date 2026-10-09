@@ -1,7 +1,7 @@
 // Módulo 6 · Aportes y Pagos (Eugenia)
 import type { Aporte, CambioAporte, ResumenColecta } from '../types/api'
 import { USAR_MOCKS } from './config'
-import { noEncontrado, prohibido } from './errores'
+import { ErrorApi, noEncontrado, prohibido } from './errores'
 import { api } from './http'
 import { colectas, type ColectaConAportes } from './mocks/datos'
 import { idUsuarioMock } from './mocks/sesion'
@@ -61,6 +61,8 @@ export async function actualizarAporte(
   if (!recaudador && padreId !== usuario) throw prohibido('Solo podés modificar tu propio aporte')
   if (cambio.pagado !== undefined && !recaudador) throw prohibido('Solo el recaudador registra pagos')
   if (c.estadoColecta === 'cerrada') throw prohibido('La colecta ya está cerrada')
+  if (cambio.pagado === true && c.montoIndividualPesos <= 0)
+    throw new ErrorApi(409, 'El monto todavía no está congelado: no se pueden registrar pagos')
 
   const aporte = c.aportes.find((a) => a.padreId === padreId)
   if (!aporte) throw noEncontrado('Aporte')

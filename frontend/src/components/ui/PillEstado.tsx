@@ -21,7 +21,7 @@ export function PillEstado({ estado, etiqueta }: PillEstadoProps) {
   const { clases, Icono, etiqueta: porDefecto } = config[estado]
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-caption font-bold ${clases}`}
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1 text-caption font-bold ${clases}`}
     >
       <Icono size={14} strokeWidth={2.4} aria-hidden />
       {etiqueta ?? porDefecto}

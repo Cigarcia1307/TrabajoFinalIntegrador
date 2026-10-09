@@ -53,16 +53,17 @@ export function GuiaDisenoPage() {
           ))}
         </div>
         <div className="flex gap-2">
-          <AvatarCumpleanero beneficiarioId="b-martina" nombre="Martina" />
-          <AvatarCumpleanero beneficiarioId="b-tomas" nombre="Tomás" />
-          <AvatarCumpleanero beneficiarioId="b-sofia" nombre="Sofía" />
-          <AvatarCumpleanero beneficiarioId="b-carla" nombre="Carla" pasado />
+          <AvatarCumpleanero ordenEnLaRueda={1} nombre="Tomás" pasado />
+          <AvatarCumpleanero ordenEnLaRueda={2} nombre="Sofía" />
+          <AvatarCumpleanero ordenEnLaRueda={3} nombre="Valentina" />
+          <AvatarCumpleanero ordenEnLaRueda={4} nombre="Martina" />
+          <AvatarCumpleanero ordenEnLaRueda={5} nombre="Benjamín" />
         </div>
       </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="text-h2 font-extrabold">Card con monto</h2>
-        <Card beneficiarioId="b-martina" elevada className="max-w-md">
+        <Card ordenEnLaRueda={4} elevada className="max-w-md">
           <p className="text-caption text-texto-suave">Tu aporte</p>
           <p className="text-monto font-extrabold tabular-nums">{formatearARS(7450)}</p>
           <p className="text-caption text-texto-suave">5 litros de nafta súper</p>

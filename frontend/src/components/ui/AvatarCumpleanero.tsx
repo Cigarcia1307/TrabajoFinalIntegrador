@@ -9,8 +9,8 @@ const tamanos: Record<Tamano, string> = {
 }
 
 interface AvatarCumpleaneroProps {
-  /** _id del beneficiario que viene de la API: define su color confeti. */
-  beneficiarioId: string
+  /** Lugar en la rueda (colecta.ordenEnLaRueda): define su color confeti. */
+  ordenEnLaRueda: number
   nombre: string
   tamano?: Tamano
   /** Cumpleaños que ya pasó en el ciclo: se muestra en gris. */
@@ -18,12 +18,12 @@ interface AvatarCumpleaneroProps {
 }
 
 export function AvatarCumpleanero({
-  beneficiarioId,
+  ordenEnLaRueda,
   nombre,
   tamano = 'md',
   pasado = false,
 }: AvatarCumpleaneroProps) {
-  const fondo = pasado ? 'bg-no-participa-bg text-no-participa' : `${colorCumpleanero(beneficiarioId).bg} text-tinta`
+  const fondo = pasado ? 'bg-no-participa-bg text-no-participa' : `${colorCumpleanero(ordenEnLaRueda).bg} text-tinta`
   return (
     <span
       className={`inline-flex shrink-0 items-center justify-center rounded-full font-extrabold ${tamanos[tamano]} ${fondo}`}
