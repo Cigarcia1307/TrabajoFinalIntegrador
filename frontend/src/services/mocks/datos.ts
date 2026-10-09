@@ -2,8 +2,10 @@ import type {
   Aporte,
   CicloLectivo,
   Colecta,
+  EstadoVotacion,
   Indice,
   IndiceId,
+  OpcionIndice,
   Participante,
   PrecioReferencia,
   Rol,
@@ -153,6 +155,7 @@ export const colectas: ColectaConAportes[] = [
     beneficiarioNombre: 'Tomás',
     esPrimeraVoluntaria: true,
     indiceReferencia: 'nafta_ypf',
+    cantidadUnidades: 5,
     ordenEnLaRueda: 1,
     padreId: IDS.juan,
     recaudadorId: IDS.maria,
@@ -169,6 +172,7 @@ export const colectas: ColectaConAportes[] = [
     beneficiarioNombre: 'Sofía',
     esPrimeraVoluntaria: false,
     indiceReferencia: 'nafta_ypf',
+    cantidadUnidades: 5,
     ordenEnLaRueda: 2,
     padreId: IDS.maria,
     recaudadorId: IDS.juan,
@@ -188,6 +192,7 @@ export const colectas: ColectaConAportes[] = [
     beneficiarioNombre: 'Valentina',
     esPrimeraVoluntaria: false,
     indiceReferencia: 'nafta_ypf',
+    cantidadUnidades: 5,
     ordenEnLaRueda: 3,
     padreId: IDS.carlos,
     recaudadorId: IDS.maria,
@@ -197,13 +202,14 @@ export const colectas: ColectaConAportes[] = [
     id: 'colecta-4-martina',
     cicloLectivo: 2026,
     fechaCumpleanos: '2026-10-09',
-    montoIndividualPesos: 7450, // congelado el 08/10: 5 litros × $1.490
+    montoIndividualPesos: 7450, // congelado el 08/10: 5 litros × $1.490 (índice y cantidad se fijan acá)
     montoTotalObjetivo: 37250,
     estadoColecta: 'en_recaudacion',
     activo: true,
     beneficiarioNombre: 'Martina',
     esPrimeraVoluntaria: false,
     indiceReferencia: 'nafta_ypf',
+    cantidadUnidades: 5,
     ordenEnLaRueda: 4,
     padreId: IDS.laura,
     recaudadorId: IDS.carlos,
@@ -226,6 +232,7 @@ export const colectas: ColectaConAportes[] = [
     beneficiarioNombre: 'Benjamín',
     esPrimeraVoluntaria: false,
     indiceReferencia: 'nafta_ypf',
+    cantidadUnidades: null,
     ordenEnLaRueda: 5,
     padreId: IDS.diego,
     recaudadorId: IDS.laura,
@@ -242,6 +249,7 @@ export const colectas: ColectaConAportes[] = [
     beneficiarioNombre: 'Camila',
     esPrimeraVoluntaria: false,
     indiceReferencia: 'nafta_ypf',
+    cantidadUnidades: null,
     ordenEnLaRueda: 6,
     padreId: IDS.ana,
     recaudadorId: IDS.diego,
@@ -249,42 +257,78 @@ export const colectas: ColectaConAportes[] = [
   },
 ]
 
+/** Catálogo de índices (en el backend lo define cada CotizacionStrategy). */
 export const indices: Indice[] = [
-  {
-    id: 'nafta_ypf',
-    nombre: 'Nafta súper YPF',
-    unidad: 'litro',
-    unidadPlural: 'litros',
-    cantidadPorParticipante: 5,
-    votos: 4,
-  },
-  {
-    id: 'dolar_mep',
-    nombre: 'Dólar MEP',
-    unidad: 'dólar',
-    unidadPlural: 'dólares',
-    cantidadPorParticipante: 5,
-    votos: 1,
-  },
-  {
-    id: 'cajita_feliz',
-    nombre: 'Cajita Feliz',
-    unidad: 'cajita',
-    unidadPlural: 'cajitas',
-    cantidadPorParticipante: 1,
-    votos: 1,
-  },
+  { id: 'nafta_ypf', nombre: 'Nafta súper YPF', unidad: 'litro', unidadPlural: 'litros' },
+  { id: 'dolar_mep', nombre: 'Dólar MEP', unidad: 'dólar', unidadPlural: 'dólares' },
+  { id: 'cajita_feliz', nombre: 'Cajita Feliz', unidad: 'cajita', unidadPlural: 'cajitas' },
 ]
 
-/** Quién votó qué índice (para no votar dos veces). */
-export const votos: Record<string, IndiceId> = {
-  [IDS.juan]: 'nafta_ypf',
-  [IDS.maria]: 'nafta_ypf',
-  [IDS.carlos]: 'nafta_ypf',
-  [IDS.laura]: 'nafta_ypf',
-  [IDS.diego]: 'dolar_mep',
-  [IDS.ana]: 'cajita_feliz',
+/** Votación tal como está en la base (colección `votacion_indice`). */
+export interface VotacionMock {
+  id: string
+  cicloLectivo: number
+  estado: EstadoVotacion
+  creadaPor: string
+  fechaApertura: string
+  fechaCierre: string | null
+  opciones: OpcionIndice[]
+  votos: { padreId: string; indice: IndiceId; fecha: string }[]
+  indiceElegido: IndiceId | null
+  cantidadUnidades: number | null
 }
+
+/**
+ * Historia del ciclo 2026:
+ *   - Marzo: se votó y ganó nafta, 5 litros por participante (vigente).
+ *   - Octubre: Juan (admin) abrió una votación nueva: proponen subir a 6 litros
+ *     o pasar a 5 dólares MEP, porque el monto quedó corto.
+ *     Ya votaron Juan y Diego; María (usuaria por defecto) todavía no.
+ */
+export const votaciones: VotacionMock[] = [
+  {
+    id: 'votacion-2026-marzo',
+    cicloLectivo: 2026,
+    estado: 'vigente',
+    creadaPor: IDS.juan,
+    fechaApertura: '2026-03-02',
+    fechaCierre: '2026-03-09',
+    opciones: [
+      { indice: 'nafta_ypf', cantidadUnidades: 5 },
+      { indice: 'dolar_mep', cantidadUnidades: 5 },
+      { indice: 'cajita_feliz', cantidadUnidades: 1 },
+    ],
+    votos: [
+      { padreId: IDS.juan, indice: 'nafta_ypf', fecha: '2026-03-03' },
+      { padreId: IDS.maria, indice: 'nafta_ypf', fecha: '2026-03-03' },
+      { padreId: IDS.carlos, indice: 'nafta_ypf', fecha: '2026-03-04' },
+      { padreId: IDS.laura, indice: 'nafta_ypf', fecha: '2026-03-05' },
+      { padreId: IDS.diego, indice: 'dolar_mep', fecha: '2026-03-05' },
+      { padreId: IDS.ana, indice: 'cajita_feliz', fecha: '2026-03-06' },
+    ],
+    indiceElegido: 'nafta_ypf',
+    cantidadUnidades: 5,
+  },
+  {
+    id: 'votacion-2026-octubre',
+    cicloLectivo: 2026,
+    estado: 'abierta',
+    creadaPor: IDS.juan,
+    fechaApertura: '2026-10-05',
+    fechaCierre: null,
+    opciones: [
+      { indice: 'nafta_ypf', cantidadUnidades: 6 },
+      { indice: 'dolar_mep', cantidadUnidades: 5 },
+      { indice: 'cajita_feliz', cantidadUnidades: 1 },
+    ],
+    votos: [
+      { padreId: IDS.juan, indice: 'nafta_ypf', fecha: '2026-10-05' },
+      { padreId: IDS.diego, indice: 'dolar_mep', fecha: '2026-10-06' },
+    ],
+    indiceElegido: null,
+    cantidadUnidades: null,
+  },
+]
 
 export const preciosReferencia: PrecioReferencia[] = [
   { id: 'precio-1', indice: 'nafta_ypf', fecha: '2026-03-19', valorUnitarioArs: 1120 },

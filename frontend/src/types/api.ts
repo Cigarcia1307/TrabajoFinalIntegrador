@@ -66,7 +66,10 @@ export interface Colecta {
   activo: boolean
   beneficiarioNombre: string
   esPrimeraVoluntaria: boolean
+  /** Se fija al congelar el monto; antes rige el índice vigente (GET /api/indices/vigente). */
   indiceReferencia: IndiceId
+  /** Unidades del índice por participante (ej. 5 litros). null hasta que se congela el monto. */
+  cantidadUnidades: number | null
   ordenEnLaRueda: number
   /** Padre del cumpleañero */
   padreId: string
@@ -77,18 +80,62 @@ export interface Colecta {
 
 export type IndiceId = 'nafta_ypf' | 'dolar_mep' | 'cajita_feliz'
 
-/** Respuesta de GET /api/indices */
+/**
+ * Respuesta de GET /api/indices — catálogo de índices.
+ * No está en la base: lo define cada CotizacionStrategy del backend.
+ */
 export interface Indice {
   id: IndiceId
   nombre: string // "Nafta súper YPF"
   unidad: string // "litro"
   unidadPlural: string // "litros"
-  /**
-   * Cuántas unidades aporta cada participante (ej. 5 litros).
-   * ⚠️ Todavía no está en el esquema de la base: hay que definir dónde se guarda.
-   */
-  cantidadPorParticipante: number
+}
+
+/** Una opción de la votación: un índice con su cantidad (ej. 5 litros de nafta). */
+export interface OpcionIndice {
+  indice: IndiceId
+  cantidadUnidades: number
+}
+
+export type EstadoVotacion = 'abierta' | 'vigente' | 'reemplazada'
+
+/** Respuesta de GET /api/indices/vigente — lo que se aplica hoy a las colectas sin congelar. */
+export interface IndiceVigente extends OpcionIndice {
+  votacionId: string
+  /** Fecha en que se cerró la votación que lo eligió. */
+  vigenteDesde: string
+}
+
+/** Una opción de la votación abierta, con sus votos hasta ahora. */
+export interface ResultadoOpcion extends OpcionIndice {
   votos: number
+}
+
+/**
+ * Respuesta de GET /api/indices/votacion — la votación abierta, vista por el usuario logueado.
+ * El backend devuelve el conteo, no quién votó qué (colección `votacion_indice`).
+ */
+export interface VotacionAbierta {
+  id: string
+  cicloLectivo: number
+  fechaApertura: string
+  /** Nombre de quien la abrió (un ADMINISTRADOR). */
+  creadaPor: string
+  opciones: ResultadoOpcion[]
+  /** Qué votó el usuario logueado, o null si todavía no votó. */
+  miVoto: IndiceId | null
+  cantidadVotaron: number
+  cantidadParticipantes: number
+}
+
+/** Cuerpo de POST /api/indices/votacion (solo ADMINISTRADOR). */
+export interface NuevaVotacion {
+  opciones: OpcionIndice[]
+}
+
+/** Cuerpo de POST /api/indices/votacion/cerrar. `desempate` solo hace falta si hay empate. */
+export interface CierreVotacion {
+  desempate?: IndiceId
 }
 
 /** Respuesta de GET /api/indices/{indice}/cotizacion-actual */
