@@ -49,7 +49,7 @@ El caso de uso inicial del proyecto es un grupo de padres de un colegio, donde s
 * **Congelamiento de Valor Automático:** el sistema ejecuta un proceso programado que fija el valor exacto en pesos argentinos (ARS) el día hábil anterior a la colecta.
 * **Participación individual:** para cada colecta, cada participante decide si desea participar o no. La decisión es independiente de las demás colectas. Esa decisión, y el estado de pago, son visibles únicamente para el propio participante y para el recaudador de esa colecta — el resto del grupo no ve el estado de nadie más (ver "Decisiones de diseño cerradas en la 2.ª Entrega").
 * **Gestión de recaudadores:** el recaudador de cada colecta no se asigna manualmente: se resuelve por regla de negocio (ver "Decisiones de diseño cerradas en la 2.ª Entrega"). Es el único, dentro de esa colecta puntual, que puede consultar el estado de todos los participantes (quién participa, quién no, quién ya pagó) y un resumen agregado de lo recaudado frente al objetivo.
-* **Notificaciones y recordatorios:** _fuera del MVP_ — el monto congelado y el CBU/alias del recaudador se muestran en pantalla al participante; el envío automático de avisos por mail/push queda documentado como ampliación futura (Módulo 7, ver "Módulos del Backend").
+* **Recordatorios de pago:** dentro de la aplicación, el participante que todavía no pagó ve un aviso con el monto congelado y el CBU/alias del recaudador, que sube de tono a medida que pasan los días. El recaudador puede copiar un recordatorio listo para pegar en el grupo de WhatsApp (sin nombres) o uno individual para cada pendiente. El envío automático por mail/push queda documentado como ampliación futura (Módulo 7, ver "Módulos del Backend").
 * **Trazabilidad e historial:** se conserva el historial de participación y aportes. Los participantes que dejen de pertenecer al grupo serán desactivados, sin eliminar su información histórica.
 
 ---
@@ -59,7 +59,7 @@ El caso de uso inicial del proyecto es un grupo de padres de un colegio, donde s
 El desarrollo aborda los siguientes desafíos de ingeniería de software:
 
 * **Patrón Strategy:** resuelve la obtención de cotizaciones de distintos índices de referencia (Nafta YPF, Dólar MEP, Cajita Feliz) mediante una interfaz `CotizacionStrategy` con una implementación por índice, sin acoplar el servicio de colectas a un índice particular.
-* **Tareas programadas (Scheduler):** ejecución automática del congelamiento de valores de referencia el día hábil anterior a cada colecta. La generación de recordatorios queda fuera del MVP (ver "Módulos del Backend").
+* **Tareas programadas (Scheduler):** ejecución automática del congelamiento de valores de referencia el día hábil anterior a cada colecta. El envío automático de recordatorios por mail/push queda fuera del MVP (ver "Módulos del Backend").
 * **Seguridad y Control de Acceso:** autenticación mediante JWT, almacenamiento seguro de contraseñas y control de acceso basado en roles (RBAC).
 
 ---
@@ -114,7 +114,7 @@ erDiagram
     VOTACION_INDICE {
         ObjectId _id
         number ciclo_lectivo
-        string estado "abierta, vigente o reemplazada"
+        string estado "abierta o cerrada"
         ObjectId creada_por
         date fecha_apertura
         date fecha_cierre
@@ -143,7 +143,7 @@ erDiagram
 
 > La relación entre `precio_referencia.indice` y `colecta_cumpleanos.indice_referencia` es lógica (por string), no por ObjectId, y no se representa arriba por no ser una referencia formal de la base.
 
-> `votacion_indice` y `colecta_cumpleanos.cantidad_unidades` también son extensiones aditivas: guardan cuántas unidades del índice aporta cada participante (ej. 5 litros de nafta) y permiten cambiar el índice o la cantidad durante el año con una nueva votación. El índice y la cantidad se copian a cada colecta al congelar su monto, así un cambio no afecta a las colectas ya congeladas o cobradas. Detalle en [`database/esquema_base_datos.md`](database/esquema_base_datos.md) (secciones 2.4 y 4).
+> `votacion_indice` y `colecta_cumpleanos.cantidad_unidades` también son extensiones aditivas: guardan cuántas unidades del índice aporta cada participante (ej. 5 litros de nafta). Se vota una sola vez por ciclo lectivo y el resultado no cambia durante el año. El índice y la cantidad se copian a cada colecta al congelar su monto, para que cada colecta conserve con qué valores se cobró. Detalle en [`database/esquema_base_datos.md`](database/esquema_base_datos.md) (secciones 2.4 y 4).
 
 > El campo `participa` en `aportes[]` es una extensión aditiva sobre el esquema ya aprobado en Bases de Datos II (no modifica ni elimina campos existentes): permite distinguir "decidió no participar" de "todavía no respondió", algo que antes solo se infería de la ausencia de la entrada.
 
@@ -189,20 +189,20 @@ GET    /api/colectas/{id}/recaudador
 > El `recaudador_id` que asigna este módulo es la base del chequeo de autorización del Módulo 6: quién puede ver el estado de todos los aportes de una colecta se resuelve comparando el usuario logueado contra este campo, no con el rol genérico de JWT.
 
 ### Módulo 4 · Índices de Referencia (patrón Strategy)
-Resuelve la cotización de cada índice sin acoplar el servicio de colectas a uno en particular. El índice **y la cantidad de unidades** por participante (ej. 5 litros de nafta) se fijan por votación de todos los participantes al inicio del ciclo lectivo. Para cambiarlos durante el año se abre una nueva votación; el cambio aplica a las colectas que todavía no se congelaron (ver Módulo 5).
+Resuelve la cotización de cada índice sin acoplar el servicio de colectas a uno en particular. El índice **y la cantidad de unidades** por participante (ej. 5 litros de nafta) se fijan por **una única votación** de todos los participantes al inicio del ciclo lectivo y **no se modifican durante el año**, para que todos los cumpleañeros reciban lo mismo en unidades.
 **Clases:** `CotizacionStrategy` (interfaz), `NaftaYpfStrategy`, `DolarMepStrategy`, `CajitaFelizStrategy`, `VotacionIndice`, `IndiceReferenciaController`, `VotacionIndiceService`.
 ```
 GET    /api/indices                            # catálogo de índices (nombre y unidad)
-GET    /api/indices/vigente                    # índice y cantidad de unidades que se aplican hoy
-GET    /api/indices/votacion                   # votación abierta: opciones, resultados y mi voto (204 si no hay)
-POST   /api/indices/votacion                   # solo ADMINISTRADOR: abre una votación nueva con sus opciones
+GET    /api/indices/vigente                    # índice y cantidad elegidos para el ciclo actual (404 si todavía no se votó)
+GET    /api/indices/votacion                   # votación abierta del ciclo: opciones, resultados y mi voto (204 si no hay)
+POST   /api/indices/votacion                   # solo ADMINISTRADOR: abre la votación del ciclo (409 si el ciclo ya tiene una)
 POST   /api/indices/votar                      # un voto por participante (409 si ya votó)
-POST   /api/indices/votacion/cerrar            # solo ADMINISTRADOR: la más votada pasa a vigente
+POST   /api/indices/votacion/cerrar            # solo ADMINISTRADOR: la más votada queda fija para todo el ciclo
 GET    /api/indices/{indice}/cotizacion-actual
 ```
 
 ### Módulo 5 · Congelamiento de Montos
-Scheduler/Cron Job que fija el valor en pesos el día hábil previo a cada colecta, persistiéndolo en `precio_referencia` y en `monto_individual_pesos`. En ese mismo momento copia a la colecta el `indice_referencia` y la `cantidad_unidades` de la votación vigente (Módulo 4): `monto_individual_pesos = cantidad_unidades × valor_unitario_ars`.
+Scheduler/Cron Job que fija el valor en pesos el día hábil previo a cada colecta, persistiéndolo en `precio_referencia` y en `monto_individual_pesos`. En ese mismo momento copia a la colecta el `indice_referencia` y la `cantidad_unidades` de la votación del ciclo (Módulo 4): `monto_individual_pesos = cantidad_unidades × valor_unitario_ars`.
 **Clases:** `CongelamientoScheduler`, `PrecioReferencia`, `CongelamientoService`.
 ```
 GET    /api/precios-referencia?indice=nafta_ypf&fecha=2026-06-29
@@ -219,9 +219,11 @@ GET    /api/colectas/{id}/deuda-pendiente       # solo recaudador
 GET    /api/colectas/{id}/resumen               # solo recaudador: recaudado vs. monto_total_objetivo, cantidad de pendientes
 ```
 
+**Recordatorios de pago (dentro del MVP, sin mails):** se resuelven en el frontend con los datos que ya devuelven estos endpoints, sin campos ni endpoints nuevos. Al participante que todavía no pagó le aparece un aviso desde que el monto se congela, que sube de tono según los días que pasaron desde el cumpleaños (el festejo y la entrega del regalo suelen ser posteriores). El recaudador tiene dos botones para copiar texto: un recordatorio para el grupo de WhatsApp **sin nombres** (respeta la regla de visibilidad) y uno individual junto a cada pendiente, para mandar por privado.
+
 ### Fuera de alcance del MVP
 
-**Módulo 7 · Notificaciones** — automatizar los recordatorios de pago vía mail/push, disparados tras el congelamiento (Módulo 5). Documentado como ampliación futura incremental; no requiere cambios en el esquema de datos.
+**Módulo 7 · Notificaciones** — enviar automáticamente por mail/push los recordatorios de pago que en el MVP se muestran dentro de la aplicación (Módulo 6), disparados tras el congelamiento (Módulo 5). Documentado como ampliación futura incremental; no requiere cambios en el esquema de datos.
 
 ### Responsables por módulo
 
@@ -311,7 +313,9 @@ colectaapp/
 ### Decisiones de diseño cerradas en la 2.ª Entrega
 
 * **Asignación del recaudador por colecta:** la primera colecta del ciclo lectivo la organiza un participante voluntario (`es_primera_voluntaria: true`); si se postula más de uno, se asigna al que se postuló primero por orden cronológico. A partir de ahí, el padre cuyo hijo ya recibió la colecta anterior pasa a ser el `recaudador_id` de la colecta siguiente, sosteniendo la lógica de cadena circular. El padre beneficiario de una colecta no aporta económicamente a la colecta de su propio hijo.
-* **Alcance de las notificaciones:** quedan **fuera del MVP** de la Entrega Final y se documentan como ampliación futura (Módulo 7). El monto congelado y el CBU/alias del recaudador se muestran en pantalla, cubriendo la necesidad funcional sin sumar una dependencia externa de envío de mail/push al alcance del TIF.
+* **Alcance de las notificaciones:** los recordatorios de pago se muestran **dentro de la aplicación** y el recaudador puede copiarlos para el grupo de WhatsApp (Módulo 6). El envío automático por mail/push queda **fuera del MVP** y se documenta como ampliación futura (Módulo 7), para no sumar una dependencia externa al alcance del TIF.
+* **Índice fijo durante el ciclo:** el índice y la cantidad de unidades se votan una sola vez al inicio del ciclo lectivo y no se modifican durante el año, para que todos los cumpleañeros reciban lo mismo en unidades (Módulo 4).
+* **Congelamiento el día hábil anterior:** se mantiene para que el cumpleañero reciba el valor más actualizado posible. Como el festejo y la entrega del regalo suelen ser posteriores al cumpleaños, el período de pago continúa después de esa fecha, acompañado por los recordatorios.
 * **Visibilidad del estado de aportes:** dentro de una colecta puntual, cada participante ve únicamente su propio estado (si participa o no, si ya pagó o no); el recaudador de esa colecta es el único que ve el estado de todos y el resumen agregado (Módulo 6). Es una sola regla de autorización a nivel de recurso — no un caso especial para "esconder a los que dijeron que no" — que de paso evita que se pueda deducir por eliminación quién declinó participar.
 
 ---

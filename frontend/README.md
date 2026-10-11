@@ -108,3 +108,17 @@ localStorage.removeItem('colectaapp.usuarioMock')                          // vo
 ```
 
 y recargar la página. Los cambios que se hagan (marcar pagos, votar) duran hasta recargar.
+
+### Probar la votación del índice
+
+Por defecto, la votación del ciclo 2026 ya está cerrada (ganó nafta, 5 litros) y el índice no cambia en el año. Para ver las otras pantallas de `/indice`, en la consola:
+
+```js
+localStorage.setItem('colectaapp.escenarioVotacion', 'abierta')      // votación abierta: votar y, como Juan, cerrarla
+localStorage.setItem('colectaapp.escenarioVotacion', 'sin-votacion') // ciclo sin votación: Juan puede abrirla
+localStorage.removeItem('colectaapp.escenarioVotacion')              // volver a la votación cerrada
+```
+
+### Recordatorios de pago
+
+Se calculan con la fecha del cumple (ver `src/features/aportes/lib/recordatorios.ts`), así que dependen del día en que se prueben. El participante que no pagó ve un aviso que sube de tono a partir del día siguiente al cumple y a partir de la semana. El recaudador ve, con el monto congelado, un recordatorio para el grupo (sin nombres) y uno individual por cada pendiente.

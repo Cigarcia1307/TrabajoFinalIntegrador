@@ -72,7 +72,7 @@ Representa cada colecta puntual organizada durante el ciclo lectivo.
 | `orden_en_la_rueda` | Number | Posición en la cadena circular del ciclo (1, 2, 3...) |
 | `recaudador_id` | ObjectId (ref → `padres`) | Padre responsable de cobrar **esta** colecta |
 | `es_primera_voluntaria` | Boolean | `true` solo en la colecta N.º 1, donde el recaudador se ofreció voluntariamente |
-| `indice_referencia` | String | Índice usado para fijar el valor (ej. `"nafta_ypf"`, `"dolar_mep"`). Se fija al congelar el monto (ver sección 4) |
+| `indice_referencia` | String | Índice usado para fijar el valor (ej. `"nafta_ypf"`, `"dolar_mep"`). Se copia de la votación del ciclo al congelar el monto (ver sección 4) |
 | `cantidad_unidades` | Number / null | Unidades del índice que aporta cada participante (ej. `5` litros). `null` hasta que se congela el monto |
 | `aportes` | Array\<Object\> | Registro de pagos individuales de cada participante |
 
@@ -142,13 +142,13 @@ En el sistema final, estos documentos se generarán automáticamente mediante un
 
 ### 2.4 `votacion_indice`
 
-Registra cada votación del índice de referencia y de la **cantidad de unidades** que aporta cada participante. Hay una al inicio de cada ciclo lectivo y puede haber más durante el año: para cambiar el índice o la cantidad se abre una **nueva votación de todos los participantes**. Se conserva el historial completo (ej. en marzo se eligió nafta, en julio se pasó a dólar MEP).
+Registra la votación del índice de referencia y de la **cantidad de unidades** que aporta cada participante. Hay **una sola por ciclo lectivo**, al inicio del año, y su resultado **no se modifica durante el ciclo**: así todos los cumpleañeros del año reciben lo mismo en unidades y nadie se ve perjudicado por un cambio de reglas a mitad de camino. Cada año se vota de nuevo, y las votaciones de años anteriores quedan como historial.
 
 | Campo | Tipo | Descripción |
 |---|---|---|
 | `_id` | ObjectId | Identificador único |
 | `ciclo_lectivo` | Number | Año del ciclo (ej. 2026) |
-| `estado` | String | `"abierta"` (se está votando), `"vigente"` (es la que se aplica hoy) o `"reemplazada"` (la reemplazó una votación posterior) |
+| `estado` | String | `"abierta"` (se está votando) o `"cerrada"` (ya tiene resultado, que rige todo el ciclo) |
 | `creada_por` | ObjectId (ref → `padres`) | Administrador que abrió la votación |
 | `fecha_apertura` | Date | Cuándo se abrió |
 | `fecha_cierre` | Date / null | Cuándo se cerró; `null` mientras está abierta |
@@ -166,7 +166,7 @@ Registra cada votación del índice de referencia y de la **cantidad de unidades
 {
   "_id": { "$oid": "6b01a2c3d4e5f60718293a4b" },
   "ciclo_lectivo": 2026,
-  "estado": "vigente",
+  "estado": "cerrada",
   "creada_por": { "$oid": "6a9dec18b9068acfd506196b" },
   "fecha_apertura": { "$date": "2026-03-02T00:00:00.000Z" },
   "fecha_cierre": { "$date": "2026-03-09T00:00:00.000Z" },
@@ -194,7 +194,7 @@ padres (1) ──────< colecta_cumpleanos.recaudador_id  (un padre puede
 padres (1) ──────< colecta_cumpleanos.aportes[].padre_id  (un padre puede aportar a N colectas)
 precio_referencia.indice ──── colecta_cumpleanos.indice_referencia  (relación lógica, no por ObjectId)
 padres (1) ──────< votacion_indice.votos[].padre_id      (un padre vota una vez por votación)
-votacion_indice (vigente) ──── colecta_cumpleanos.indice_referencia + cantidad_unidades  (se copian al congelar)
+votacion_indice (del ciclo) ──── colecta_cumpleanos.indice_referencia + cantidad_unidades  (se copian al congelar)
 ```
 
 No se usan referencias formales (`$lookup`) de forma estricta porque MongoDB es NoSQL; las relaciones se resuelven a nivel de aplicación (backend), consultando por `ObjectId` cuando es necesario.
@@ -217,13 +217,18 @@ Además, en esta entrega se definió **quién puede ver el array `aportes` compl
 - El `recaudador_id` de esa colecta es el único que puede ver el array completo (todos los `participa` y `pagado` de todos los padres) y un resumen agregado (recaudado vs. `monto_total_objetivo`, cantidad de pendientes).
 - Es una sola regla de autorización a nivel de recurso — se compara el `_id` de quien pide los datos contra el `recaudador_id` de esa colecta, no contra un rol genérico (`ADMINISTRADOR`/`PARTICIPANTE`) — y se aplica siempre del lado del backend. De paso resuelve que no se pueda deducir por eliminación quién decidió no participar.
 
-También se definió **cómo se elige el índice y la cantidad de unidades, y cómo se cambian durante el año** (colección `votacion_indice`):
+También se definió **cómo se elige el índice y la cantidad de unidades** (colección `votacion_indice`):
 
-- Al inicio de cada ciclo lectivo el administrador abre una votación con las opciones (índice + cantidad de unidades). Cada participante vota **una sola vez** por votación.
-- Solo puede haber **una votación abierta** a la vez. Al cerrarla, la opción más votada pasa a `"vigente"` y la anterior a `"reemplazada"`. En caso de empate, decide el administrador al cerrar.
-- Para cambiar el índice o la cantidad a mitad de año se abre una **nueva votación de todos** (no lo cambia el administrador por su cuenta).
-- El cambio aplica a **todas las colectas que todavía no se congelaron**. Por eso `indice_referencia` y `cantidad_unidades` se guardan en la colecta recién **al congelar el monto** (día hábil anterior al cumpleaños), junto con `monto_individual_pesos`. Antes de eso, la colecta usa la votación vigente.
-- Las colectas ya congeladas o cobradas **no cambian**, aunque después haya otra votación: los participantes ya pagaron ese monto.
+- Al inicio de cada ciclo lectivo el administrador abre **una única votación** con las opciones (índice + cantidad de unidades, una opción por índice). Cada participante vota **una sola vez**.
+- Al cerrarla, la opción más votada queda fija **para todo el ciclo**: no se puede cambiar durante el año. En caso de empate, decide el administrador al cerrar.
+- La votación tiene que cerrarse **antes del primer congelamiento del ciclo**.
+- Al congelar el monto de cada colecta (día hábil anterior al cumpleaños) se copian a la colecta `indice_referencia` y `cantidad_unidades` junto con `monto_individual_pesos`, para que cada colecta conserve con qué valores se cobró.
+
+Por último, se definieron los **recordatorios de pago** dentro del MVP, sin envío de mails (Módulo 6 del README):
+
+- Se calculan en la aplicación con datos que ya existen (`fecha_cumpleanos`, `monto_individual_pesos`, `participa` y `pagado`); **no requieren campos nuevos**.
+- Le aparecen al participante que todavía no pagó, desde que el monto se congela, y suben de tono a medida que pasan los días desde el cumpleaños.
+- El recaudador puede copiar un recordatorio para el grupo de WhatsApp **sin nombres** (para respetar la regla de visibilidad) o uno individual para cada pendiente.
 
 ---
 
@@ -257,4 +262,4 @@ Para optimizar las consultas más frecuentes del sistema se definen los siguient
 - Índice compuesto por `indice` y `fecha`: permite obtener rápidamente la cotización de un índice para una fecha determinada.
 
 ### Colección `votacion_indice`
-- Índice compuesto por `ciclo_lectivo` y `estado`: permite obtener rápidamente la votación vigente o la abierta de un ciclo.
+- `ciclo_lectivo`: índice único, garantiza una sola votación por ciclo y permite obtener rápidamente la del ciclo actual.
