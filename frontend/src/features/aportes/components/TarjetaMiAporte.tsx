@@ -2,6 +2,8 @@ import { Gift } from 'lucide-react'
 import { AvatarCumpleanero, Boton, Card, PillEstado } from '../../../components/ui'
 import { cantidadConUnidad, formatearARS, formatearFechaCorta, formatearFechaLarga } from '../../../lib/formato'
 import { useMiAporte, type DatosMiAporte } from '../hooks/useMiAporte'
+import { necesitaRecordatorio } from '../lib/recordatorios'
+import { AvisoPago } from './AvisoPago'
 import { BotonCopiar } from './BotonCopiar'
 
 /**
@@ -43,6 +45,7 @@ export function TarjetaMiAporte({ colectaId }: { colectaId: string }) {
         <EsTuCumple nombre={d.colecta.beneficiarioNombre} />
       ) : (
         <>
+          {necesitaRecordatorio(d.colecta, d.aporte) && <AvisoPago colecta={d.colecta} aporte={d.aporte} />}
           <Monto datos={d} />
           <Estados datos={d} />
           <Acciones datos={d} guardando={guardando} responder={responder} />
@@ -69,6 +72,14 @@ function Encabezado({ datos }: { datos: DatosMiAporte }) {
 
 function Monto({ datos }: { datos: DatosMiAporte }) {
   const { indice } = datos
+  if (!indice) {
+    return (
+      <p className="rounded-control bg-crema p-4 text-caption">
+        <span className="font-bold">Todavía no se eligió el índice del año.</span> Cuando cierre la votación vas a ver
+        cuánto te toca aportar.
+      </p>
+    )
+  }
   return (
     <div>
       <p className="text-caption text-texto-suave">Tu aporte</p>

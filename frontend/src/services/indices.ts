@@ -21,12 +21,22 @@ export async function listarIndices(): Promise<Indice[]> {
   return responder(indices)
 }
 
-/** GET /api/indices/vigente — índice y cantidad que se aplican hoy a las colectas sin congelar. */
-export async function obtenerIndiceVigente(): Promise<IndiceVigente> {
-  if (!USAR_MOCKS) return api.get('/api/indices/vigente')
+/**
+ * GET /api/indices/vigente — índice y cantidad elegidos para el ciclo (no cambian en el año).
+ * Devuelve null si la votación del ciclo todavía no cerró (el backend responde 404).
+ */
+export async function obtenerIndiceVigente(): Promise<IndiceVigente | null> {
+  if (!USAR_MOCKS) {
+    try {
+      return await api.get('/api/indices/vigente')
+    } catch (e) {
+      if (e instanceof ErrorApi && e.status === 404) return null
+      throw e
+    }
+  }
 
-  const v = votaciones.find((x) => x.estado === 'vigente')
-  if (!v || !v.indiceElegido || v.cantidadUnidades === null) throw noEncontrado('Índice vigente')
+  const v = votacionDelCiclo()
+  if (!v || v.estado !== 'cerrada' || !v.indiceElegido || v.cantidadUnidades === null) return responder(null)
   return responder({
     votacionId: v.id,
     indice: v.indiceElegido,
@@ -46,20 +56,20 @@ export async function obtenerCotizacionActual(indice: IndiceId): Promise<Cotizac
   return responder({ indice, fecha: ultima.fecha, valorUnitarioArs: ultima.valorUnitarioArs })
 }
 
-/** GET /api/indices/votacion — la votación abierta, o null si no hay ninguna (el backend responde 204). */
+/** GET /api/indices/votacion — la votación del ciclo si está abierta, o null (el backend responde 204). */
 export async function obtenerVotacionAbierta(): Promise<VotacionAbierta | null> {
   if (!USAR_MOCKS) return api.get('/api/indices/votacion')
 
-  const v = votacionAbiertaMock()
-  return responder(v ? vistaDe(v) : null)
+  const v = votacionDelCiclo()
+  return responder(v?.estado === 'abierta' ? vistaDe(v) : null)
 }
 
-/** POST /api/indices/votar — un voto por participante y por votación. */
+/** POST /api/indices/votar — un voto por participante. */
 export async function votarIndice(indice: IndiceId): Promise<VotacionAbierta> {
   if (!USAR_MOCKS) return api.post('/api/indices/votar', { indice })
 
-  const v = votacionAbiertaMock()
-  if (!v) throw new ErrorApi(409, 'No hay ninguna votación abierta')
+  const v = votacionDelCiclo()
+  if (v?.estado !== 'abierta') throw new ErrorApi(409, 'No hay ninguna votación abierta')
   const usuario = idUsuarioMock()
   if (v.votos.some((x) => x.padreId === usuario)) throw new ErrorApi(409, 'Ya votaste en esta votación')
   if (!v.opciones.some((o) => o.indice === indice)) throw noEncontrado('Opción')
@@ -68,12 +78,12 @@ export async function votarIndice(indice: IndiceId): Promise<VotacionAbierta> {
   return responder(vistaDe(v))
 }
 
-/** POST /api/indices/votacion — solo ADMINISTRADOR. Abre una votación nueva para cambiar índice o cantidad. */
+/** POST /api/indices/votacion — solo ADMINISTRADOR. Abre LA votación del ciclo (una sola por año). */
 export async function abrirVotacion(nueva: NuevaVotacion): Promise<VotacionAbierta> {
   if (!USAR_MOCKS) return api.post('/api/indices/votacion', nueva)
 
   exigirAdministrador()
-  if (votacionAbiertaMock()) throw new ErrorApi(409, 'Ya hay una votación abierta')
+  if (votacionDelCiclo()) throw new ErrorApi(409, 'Este ciclo ya tiene su votación: el índice no cambia durante el año')
   const indicesDistintos = new Set(nueva.opciones.map((o) => o.indice))
   if (nueva.opciones.length < 2 || indicesDistintos.size !== nueva.opciones.length) {
     throw new ErrorApi(400, 'La votación necesita al menos 2 opciones, con índices distintos')
@@ -84,7 +94,7 @@ export async function abrirVotacion(nueva: NuevaVotacion): Promise<VotacionAbier
 
   const v: VotacionMock = {
     id: `votacion-${Date.now()}`,
-    cicloLectivo: 2026,
+    cicloLectivo: CICLO_ACTUAL,
     estado: 'abierta',
     creadaPor: idUsuarioMock(),
     fechaApertura: hoy(),
@@ -100,15 +110,15 @@ export async function abrirVotacion(nueva: NuevaVotacion): Promise<VotacionAbier
 
 /**
  * POST /api/indices/votacion/cerrar — solo ADMINISTRADOR.
- * La más votada pasa a vigente y la anterior a reemplazada. Si hay empate, el admin
- * tiene que mandar `desempate` con una de las opciones empatadas (si no, 409).
+ * La más votada queda fija para todo el ciclo. Si hay empate, el admin tiene que
+ * mandar `desempate` con una de las opciones empatadas (si no, 409).
  */
-export async function cerrarVotacion(cierre: CierreVotacion = {}): Promise<IndiceVigente> {
+export async function cerrarVotacion(cierre: CierreVotacion = {}): Promise<IndiceVigente | null> {
   if (!USAR_MOCKS) return api.post('/api/indices/votacion/cerrar', cierre)
 
   exigirAdministrador()
-  const v = votacionAbiertaMock()
-  if (!v) throw new ErrorApi(409, 'No hay ninguna votación abierta')
+  const v = votacionDelCiclo()
+  if (v?.estado !== 'abierta') throw new ErrorApi(409, 'No hay ninguna votación abierta')
 
   const empatadas = opcionesMasVotadas(vistaDe(v).opciones)
   let ganadora = empatadas[0]
@@ -117,9 +127,7 @@ export async function cerrarVotacion(cierre: CierreVotacion = {}): Promise<Indic
     if (!ganadora) throw new ErrorApi(409, 'Hay empate: elegí cuál de las opciones empatadas gana')
   }
 
-  const anterior = votaciones.find((x) => x.estado === 'vigente')
-  if (anterior) anterior.estado = 'reemplazada'
-  v.estado = 'vigente'
+  v.estado = 'cerrada'
   v.fechaCierre = hoy()
   v.indiceElegido = ganadora.indice
   v.cantidadUnidades = ganadora.cantidadUnidades
@@ -136,7 +144,10 @@ export function opcionesMasVotadas<T extends { votos: number }>(opciones: T[]): 
 
 const hoy = () => new Date().toISOString().slice(0, 10)
 
-const votacionAbiertaMock = () => votaciones.find((x) => x.estado === 'abierta')
+/** En los mocks, el ciclo activo es 2026 (ver `ciclos` en mocks/datos.ts). */
+const CICLO_ACTUAL = 2026
+
+const votacionDelCiclo = () => votaciones.find((x) => x.cicloLectivo === CICLO_ACTUAL)
 
 function exigirAdministrador() {
   if (roles[idUsuarioMock()] !== 'ADMINISTRADOR') {

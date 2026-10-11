@@ -17,8 +17,9 @@ export interface DatosMiAporte {
   colecta: Colecta
   /** null si el usuario es el padre del cumpleañero (no aporta a su propia colecta). */
   aporte: Aporte | null
-  indice: Indice
-  /** Unidades por participante: las congeladas en la colecta, o las vigentes si todavía no se congeló. */
+  /** null solo si la colecta no se congeló y la votación del índice del ciclo todavía no cerró. */
+  indice: Indice | null
+  /** Unidades por participante: las congeladas en la colecta, o las del ciclo si todavía no se congeló. */
   cantidadUnidades: number
   recaudador: Participante
   /** Monto a mostrar: el congelado, o una estimación con la cotización de hoy. */
@@ -53,8 +54,11 @@ async function cargar(colectaId: string): Promise<DatosMiAporte> {
     return { usuario, colecta, aporte, indice, cantidadUnidades, recaudador, monto: colecta.montoIndividualPesos, congelado, fechaEstimacion: null }
   }
 
-  // Sin congelar: rige lo vigente hoy (si cambia por votación, esta colecta lo toma).
+  // Sin congelar: rige el índice elegido para el ciclo (fijo todo el año).
   const vigente = await obtenerIndiceVigente()
+  if (!vigente) {
+    return { usuario, colecta, aporte, indice: null, cantidadUnidades: 0, recaudador, monto: 0, congelado, fechaEstimacion: null }
+  }
   const cotizacion = await obtenerCotizacionActual(vigente.indice)
   return {
     usuario,

@@ -279,56 +279,74 @@ export interface VotacionMock {
 }
 
 /**
- * Historia del ciclo 2026:
- *   - Marzo: se votó y ganó nafta, 5 litros por participante (vigente).
- *   - Octubre: Juan (admin) abrió una votación nueva: proponen subir a 6 litros
- *     o pasar a 5 dólares MEP, porque el monto quedó corto.
- *     Ya votaron Juan y Diego; María (usuaria por defecto) todavía no.
+ * Votación del ciclo 2026 (una sola por ciclo; su resultado no cambia en el año).
+ *
+ * Escenario de prueba, para ver las distintas pantallas del índice. Se elige
+ * desde la consola del navegador y se recarga la página:
+ *   localStorage.setItem('colectaapp.escenarioVotacion', 'abierta')
+ *
+ *   'cerrada'      (por defecto) se votó en marzo y ganó nafta, 5 litros.
+ *   'abierta'      la votación todavía está abierta: votaron Juan y Diego;
+ *                  María (usuaria por defecto) no. Juan (admin) puede cerrarla.
+ *   'sin-votacion' el ciclo todavía no tiene votación: Juan (admin) puede abrirla.
+ *
+ * Los dos últimos son solo para probar pantallas: en la realidad la votación
+ * cierra antes del primer congelamiento del ciclo.
  */
-export const votaciones: VotacionMock[] = [
-  {
-    id: 'votacion-2026-marzo',
-    cicloLectivo: 2026,
-    estado: 'vigente',
-    creadaPor: IDS.juan,
-    fechaApertura: '2026-03-02',
-    fechaCierre: '2026-03-09',
-    opciones: [
-      { indice: 'nafta_ypf', cantidadUnidades: 5 },
-      { indice: 'dolar_mep', cantidadUnidades: 5 },
-      { indice: 'cajita_feliz', cantidadUnidades: 1 },
-    ],
-    votos: [
-      { padreId: IDS.juan, indice: 'nafta_ypf', fecha: '2026-03-03' },
-      { padreId: IDS.maria, indice: 'nafta_ypf', fecha: '2026-03-03' },
-      { padreId: IDS.carlos, indice: 'nafta_ypf', fecha: '2026-03-04' },
-      { padreId: IDS.laura, indice: 'nafta_ypf', fecha: '2026-03-05' },
-      { padreId: IDS.diego, indice: 'dolar_mep', fecha: '2026-03-05' },
-      { padreId: IDS.ana, indice: 'cajita_feliz', fecha: '2026-03-06' },
-    ],
-    indiceElegido: 'nafta_ypf',
-    cantidadUnidades: 5,
-  },
-  {
-    id: 'votacion-2026-octubre',
-    cicloLectivo: 2026,
-    estado: 'abierta',
-    creadaPor: IDS.juan,
-    fechaApertura: '2026-10-05',
-    fechaCierre: null,
-    opciones: [
-      { indice: 'nafta_ypf', cantidadUnidades: 6 },
-      { indice: 'dolar_mep', cantidadUnidades: 5 },
-      { indice: 'cajita_feliz', cantidadUnidades: 1 },
-    ],
-    votos: [
-      { padreId: IDS.juan, indice: 'nafta_ypf', fecha: '2026-10-05' },
-      { padreId: IDS.diego, indice: 'dolar_mep', fecha: '2026-10-06' },
-    ],
-    indiceElegido: null,
-    cantidadUnidades: null,
-  },
-]
+type EscenarioVotacion = 'cerrada' | 'abierta' | 'sin-votacion'
+
+function escenarioVotacion(): EscenarioVotacion {
+  try {
+    const valor = localStorage.getItem('colectaapp.escenarioVotacion')
+    return valor === 'abierta' || valor === 'sin-votacion' ? valor : 'cerrada'
+  } catch {
+    return 'cerrada'
+  }
+}
+
+const votacion2026: VotacionMock = {
+  id: 'votacion-2026',
+  cicloLectivo: 2026,
+  estado: 'cerrada',
+  creadaPor: IDS.juan,
+  fechaApertura: '2026-03-02',
+  fechaCierre: '2026-03-09',
+  opciones: [
+    { indice: 'nafta_ypf', cantidadUnidades: 5 },
+    { indice: 'dolar_mep', cantidadUnidades: 5 },
+    { indice: 'cajita_feliz', cantidadUnidades: 1 },
+  ],
+  votos: [
+    { padreId: IDS.juan, indice: 'nafta_ypf', fecha: '2026-03-03' },
+    { padreId: IDS.maria, indice: 'nafta_ypf', fecha: '2026-03-03' },
+    { padreId: IDS.carlos, indice: 'nafta_ypf', fecha: '2026-03-04' },
+    { padreId: IDS.laura, indice: 'nafta_ypf', fecha: '2026-03-05' },
+    { padreId: IDS.diego, indice: 'dolar_mep', fecha: '2026-03-05' },
+    { padreId: IDS.ana, indice: 'cajita_feliz', fecha: '2026-03-06' },
+  ],
+  indiceElegido: 'nafta_ypf',
+  cantidadUnidades: 5,
+}
+
+function votacionesIniciales(): VotacionMock[] {
+  const escenario = escenarioVotacion()
+  if (escenario === 'sin-votacion') return []
+  if (escenario === 'abierta') {
+    return [
+      {
+        ...votacion2026,
+        estado: 'abierta',
+        fechaCierre: null,
+        votos: votacion2026.votos.filter((v) => v.padreId === IDS.juan || v.padreId === IDS.diego),
+        indiceElegido: null,
+        cantidadUnidades: null,
+      },
+    ]
+  }
+  return [votacion2026]
+}
+
+export const votaciones: VotacionMock[] = votacionesIniciales()
 
 export const preciosReferencia: PrecioReferencia[] = [
   { id: 'precio-1', indice: 'nafta_ypf', fecha: '2026-03-19', valorUnitarioArs: 1120 },

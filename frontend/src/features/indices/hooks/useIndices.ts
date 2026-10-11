@@ -23,7 +23,8 @@ export interface DatosIndices {
   usuario: UsuarioActual
   esAdministrador: boolean
   catalogo: Indice[]
-  vigente: IndiceVigente
+  /** null mientras la votación del ciclo no cerró. */
+  vigente: IndiceVigente | null
   votacion: VotacionAbierta | null
   /** Cotización de hoy de cada índice, para mostrar cuánto serían en pesos. */
   cotizaciones: Record<IndiceId, Cotizacion>
@@ -49,8 +50,8 @@ async function cargar(): Promise<DatosIndices> {
 const mensajeDe = (e: unknown) => (e instanceof Error ? e.message : 'Error inesperado')
 
 /**
- * Pantalla del índice (Issue #5): índice vigente, votación abierta y,
- * para el ADMINISTRADOR, abrir y cerrar votaciones.
+ * Pantalla del índice (Issue #5): índice del ciclo, votación abierta y,
+ * para el ADMINISTRADOR, abrir y cerrar la votación del ciclo (una sola por año).
  */
 export function useIndices() {
   const [estado, setEstado] = useState<Estado>({ tipo: 'cargando' })

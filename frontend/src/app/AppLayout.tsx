@@ -1,10 +1,11 @@
-import { CalendarDays, House, Scale, UserRound, Users, type LucideIcon } from 'lucide-react'
+import { CalendarDays, House, Scale, UserRound, Users, Wallet, type LucideIcon } from 'lucide-react'
 import { NavLink, Outlet } from 'react-router'
 import { LogoRueda } from '../components/marca/LogoRueda'
 
 const secciones: { a: string; etiqueta: string; Icono: LucideIcon }[] = [
   { a: '/', etiqueta: 'Inicio', Icono: House },
   { a: '/colectas', etiqueta: 'Colectas', Icono: CalendarDays },
+  { a: '/aportes', etiqueta: 'Aportes', Icono: Wallet },
   { a: '/grupo', etiqueta: 'Grupo', Icono: Users },
   { a: '/indice', etiqueta: 'Índice', Icono: Scale },
   { a: '/perfil', etiqueta: 'Perfil', Icono: UserRound },
@@ -50,7 +51,7 @@ export function AppLayout() {
 
         <nav
           aria-label="Principal"
-          className="fixed inset-x-0 bottom-0 grid grid-cols-5 border-t border-borde bg-superficie px-2 pb-4 pt-2 md:hidden"
+          className="fixed inset-x-0 bottom-0 grid grid-cols-6 border-t border-borde bg-superficie px-2 pb-4 pt-2 md:hidden"
         >
           {secciones.map(({ a, etiqueta, Icono }) => (
             <NavLink
