@@ -12,6 +12,3 @@ export function describirOpcion(opcion: OpcionIndice, catalogo: Indice[]): strin
 export function pesosHoy(opcion: OpcionIndice, cotizaciones: Record<IndiceId, Cotizacion>): number {
   return opcion.cantidadUnidades * (cotizaciones[opcion.indice]?.valorUnitarioArs ?? 0)
 }
-
-export const mismaOpcion = (a: OpcionIndice, b: OpcionIndice) =>
-  a.indice === b.indice && a.cantidadUnidades === b.cantidadUnidades

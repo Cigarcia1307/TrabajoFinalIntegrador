@@ -1,33 +1,17 @@
-import { useState } from "react";
-import {
-  AvatarCumpleanero,
-  Boton,
-  Card,
-  PillEstado,
-  type Estado,
-} from "../../../components/ui";
-import {
-  formatearARS,
-  formatearFechaCorta,
-  formatearFechaLarga,
-} from "../../../lib/formato";
-import type { Aporte } from "../../../types/api";
-import { useRecaudacion, type FilaAporte } from "../hooks/useRecaudacion";
-import { ResumenRecaudacion } from "./ResumenRecaudacion";
+import { useState } from 'react'
+import { AvatarCumpleanero, Boton, Card, PillEstado, type Estado } from '../../../components/ui'
+import { formatearARS, formatearFechaCorta, formatearFechaLarga } from '../../../lib/formato'
+import type { Aporte } from '../../../types/api'
+import { useRecaudacion, type FilaAporte } from '../hooks/useRecaudacion'
+import { mensajeIndividual, mensajeParaGrupo } from '../lib/recordatorios'
+import { BotonCopiar } from './BotonCopiar'
+import { ResumenRecaudacion } from './ResumenRecaudacion'
 
 function estadoDe(a: Aporte): { estado: Estado; etiqueta: string } {
-  if (a.pagado)
-    return {
-      estado: "pagado",
-      etiqueta: a.fechaPago
-        ? `Pagó el ${formatearFechaCorta(a.fechaPago)}`
-        : "Pagó",
-    };
-  if (a.participa === true)
-    return { estado: "pendiente", etiqueta: "Pendiente" };
-  if (a.participa === false)
-    return { estado: "no-participa", etiqueta: "No participa" };
-  return { estado: "pendiente", etiqueta: "Sin responder" };
+  if (a.pagado) return { estado: 'pagado', etiqueta: a.fechaPago ? `Pagó el ${formatearFechaCorta(a.fechaPago)}` : 'Pagó' }
+  if (a.participa === true) return { estado: 'pendiente', etiqueta: 'Pendiente' }
+  if (a.participa === false) return { estado: 'no-participa', etiqueta: 'No participa' }
+  return { estado: 'pendiente', etiqueta: 'Sin responder' }
 }
 
 /**
@@ -37,132 +21,140 @@ function estadoDe(a: Aporte): { estado: Estado; etiqueta: string } {
  * Uso: <PanelRecaudador colectaId={colecta.id} />
  */
 export function PanelRecaudador({ colectaId }: { colectaId: string }) {
-  const { estado, guardandoId, errorAccion, marcarPago } =
-    useRecaudacion(colectaId);
+  const { estado, guardandoId, errorAccion, marcarPago } = useRecaudacion(colectaId)
 
-  if (estado.tipo === "cargando") {
-    return <Card className="h-64 animate-pulse" aria-busy="true" />;
+  if (estado.tipo === 'cargando') {
+    return <Card className="h-64 animate-pulse" aria-busy="true" />
   }
-  if (estado.tipo === "error") {
+  if (estado.tipo === 'error') {
     return (
       <Card className="border-2 border-error">
         <PillEstado estado="error" etiqueta="No pudimos cargar la colecta" />
         <p className="mt-2 text-caption text-texto-suave">{estado.mensaje}</p>
       </Card>
-    );
+    )
   }
 
-  const { colecta, resumen, filas, congelado } = estado.datos;
-  const abierta = colecta.estadoColecta === "en_recaudacion";
+  const { colecta, resumen, filas, congelado, recaudador, indice } = estado.datos
+  const abierta = colecta.estadoColecta === 'en_recaudacion'
+  // Recordatorios: solo con el monto congelado, la colecta abierta y alguien que falte.
+  const datosMensaje = recaudador ? { colecta, recaudador, indice } : null
+  const hayFaltantes = filas.some(({ aporte }) => esFaltante(aporte))
+  const puedeRecordar = abierta && congelado && datosMensaje !== null && hayFaltantes
 
   return (
-    <Card
-      ordenEnLaRueda={colecta.ordenEnLaRueda}
-      elevada
-      className="flex flex-col gap-6"
-    >
+    <Card ordenEnLaRueda={colecta.ordenEnLaRueda} elevada className="flex flex-col gap-6">
       <header className="flex items-center gap-3">
-        <AvatarCumpleanero
-          ordenEnLaRueda={colecta.ordenEnLaRueda}
-          nombre={colecta.beneficiarioNombre}
-          tamano="lg"
-        />
+        <AvatarCumpleanero ordenEnLaRueda={colecta.ordenEnLaRueda} nombre={colecta.beneficiarioNombre} tamano="lg" />
         <div>
           <p className="text-caption text-texto-suave">
             Recaudás vos · {formatearFechaLarga(colecta.fechaCumpleanos)}
-            {congelado &&
-              ` · ${formatearARS(colecta.montoIndividualPesos)} por persona`}
+            {congelado && ` · ${formatearARS(colecta.montoIndividualPesos)} por persona`}
           </p>
-          <h2 className="text-h3 font-extrabold">
-            Cumple de {colecta.beneficiarioNombre}
-          </h2>
+          <h2 className="text-h3 font-extrabold">Cumple de {colecta.beneficiarioNombre}</h2>
         </div>
       </header>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        <ResumenRecaudacion resumen={resumen} congelado={congelado} />
+        <div className="flex flex-col gap-6">
+          <ResumenRecaudacion resumen={resumen} congelado={congelado} />
+          {puedeRecordar && <RecordatorioGrupo texto={mensajeParaGrupo(datosMensaje)} />}
+        </div>
 
         <section aria-label="Estado de cada participante">
-          {errorAccion && (
-            <p
-              role="alert"
-              className="mb-3 rounded-control border-2 border-error p-3 text-caption text-error"
-            >
-              {errorAccion}
-            </p>
-          )}
-          <h3 className="mb-2 font-extrabold">Participantes</h3>
-          <ul className="divide-y divide-borde">
-            {filas.map((fila) => (
-              <FilaParticipante
-                key={fila.aporte.padreId}
-                fila={fila}
-                puedeMarcar={abierta && congelado}
-                guardando={guardandoId === fila.aporte.padreId}
-                onMarcar={(pagado) => marcarPago(fila.aporte.padreId, pagado)}
-              />
-            ))}
-          </ul>
+      {errorAccion && (
+        <p role="alert" className="mb-3 rounded-control border-2 border-error p-3 text-caption text-error">
+          {errorAccion}
+        </p>
+      )}
+        <h3 className="mb-2 font-extrabold">Participantes</h3>
+        <ul className="divide-y divide-borde">
+          {filas.map((fila) => (
+            <FilaParticipante
+              key={fila.aporte.padreId}
+              fila={fila}
+              puedeMarcar={abierta && congelado}
+              mensaje={
+                puedeRecordar && fila.participante && esFaltante(fila.aporte)
+                  ? mensajeIndividual(datosMensaje, fila.participante, fila.aporte)
+                  : null
+              }
+              guardando={guardandoId === fila.aporte.padreId}
+              onMarcar={(pagado) => marcarPago(fila.aporte.padreId, pagado)}
+            />
+          ))}
+        </ul>
         </section>
       </div>
     </Card>
-  );
+  )
+}
+
+/** Le falta pagar o responder (y no dijo que no participa). */
+const esFaltante = (a: Aporte) => !a.pagado && a.participa !== false
+
+/**
+ * Recordatorio listo para pegar en el grupo de WhatsApp.
+ * No nombra a nadie: quién no pagó solo lo sabe el recaudador (regla de visibilidad).
+ */
+function RecordatorioGrupo({ texto }: { texto: string }) {
+  return (
+    <section aria-labelledby="titulo-recordatorio" className="flex flex-col gap-3 rounded-control bg-crema p-4">
+      <div>
+        <h3 id="titulo-recordatorio" className="font-extrabold">
+          Recordatorio para el grupo
+        </h3>
+        <p className="text-caption text-texto-suave">
+          No incluye nombres: quién falta lo ves solo vos. Para escribirle a alguien por privado, usá el mensaje de cada
+          participante.
+        </p>
+      </div>
+      <p className="whitespace-pre-line rounded-control bg-superficie p-3 text-caption">{texto}</p>
+      <BotonCopiar texto={texto} etiqueta="Copiar para WhatsApp" />
+    </section>
+  )
 }
 
 interface FilaProps {
-  fila: FilaAporte;
-  puedeMarcar: boolean;
-  guardando: boolean;
-  onMarcar: (pagado: boolean) => void;
+  fila: FilaAporte
+  puedeMarcar: boolean
+  /** Recordatorio individual para copiar, o null si no corresponde. */
+  mensaje: string | null
+  guardando: boolean
+  onMarcar: (pagado: boolean) => void
 }
 
-function FilaParticipante({
-  fila,
-  puedeMarcar,
-  guardando,
-  onMarcar,
-}: FilaProps) {
-  const { aporte, participante } = fila;
-  const { estado, etiqueta } = estadoDe(aporte);
-  const nombre = participante
-    ? `${participante.nombre} ${participante.apellido}`
-    : "Participante";
-  const [confirmandoDeshacer, setConfirmandoDeshacer] = useState(false);
+function FilaParticipante({ fila, puedeMarcar, mensaje, guardando, onMarcar }: FilaProps) {
+  const { aporte, participante } = fila
+  const { estado, etiqueta } = estadoDe(aporte)
+  const nombre = participante ? `${participante.nombre} ${participante.apellido}` : 'Participante'
+  const [confirmandoDeshacer, setConfirmandoDeshacer] = useState(false)
 
   // Deshacer un pago pide confirmación: sirve para corregir errores, no para tocar sin querer.
   if (confirmandoDeshacer) {
     return (
-      <li
-        className="flex flex-col gap-3 py-3"
-        role="group"
-        aria-label={`Confirmar deshacer el pago de ${nombre}`}
-      >
+      <li className="flex flex-col gap-3 py-3" role="group" aria-label={`Confirmar deshacer el pago de ${nombre}`}>
         <p className="rounded-control bg-pendiente-bg p-3 text-caption text-pendiente">
-          <span className="font-bold">¿Deshacer el pago de {nombre}?</span> Va a
-          volver a figurar como pendiente. Usalo solo si lo registraste por
-          error o si la transferencia no llegó.
+          <span className="font-bold">¿Deshacer el pago de {nombre}?</span> Va a volver a figurar como pendiente.
+          Usalo solo si lo registraste por error o si la transferencia no llegó.
         </p>
         <div className="flex flex-wrap gap-2">
           <Boton
             variante="secundario"
             onClick={() => {
-              setConfirmandoDeshacer(false);
-              onMarcar(false);
+              setConfirmandoDeshacer(false)
+              onMarcar(false)
             }}
             className="min-h-11 text-caption"
           >
             Sí, deshacer
           </Boton>
-          <Boton
-            variante="texto"
-            onClick={() => setConfirmandoDeshacer(false)}
-            className="text-caption"
-          >
+          <Boton variante="texto" onClick={() => setConfirmandoDeshacer(false)} className="text-caption">
             Cancelar
           </Boton>
         </div>
       </li>
-    );
+    )
   }
 
   return (
@@ -170,10 +162,10 @@ function FilaParticipante({
       <div className="flex flex-col items-start gap-1">
         <span className="font-bold">{nombre}</span>
         <PillEstado estado={estado} etiqueta={etiqueta} />
+        {mensaje && <BotonCopiar texto={mensaje} etiqueta="Copiar recordatorio" variante="texto" />}
       </div>
-      {puedeMarcar &&
-        aporte.participa !== false &&
-        (aporte.pagado ? (
+      {puedeMarcar && aporte.participa !== false && (
+        aporte.pagado ? (
           <Boton
             variante="texto"
             onClick={() => setConfirmandoDeshacer(true)}
@@ -183,15 +175,11 @@ function FilaParticipante({
             Deshacer pago
           </Boton>
         ) : (
-          <Boton
-            variante="secundario"
-            onClick={() => onMarcar(true)}
-            disabled={guardando}
-            className="min-h-11 whitespace-nowrap text-caption"
-          >
-            {guardando ? "Guardando…" : "Registrar pago"}
+          <Boton variante="secundario" onClick={() => onMarcar(true)} disabled={guardando} className="min-h-11 whitespace-nowrap text-caption">
+            {guardando ? 'Guardando…' : 'Registrar pago'}
           </Boton>
-        ))}
+        )
+      )}
     </li>
-  );
+  )
 }

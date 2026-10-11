@@ -1,11 +1,12 @@
 import { Card } from '../../../components/ui'
 import { cantidadConUnidad, formatearARS, formatearFechaCorta } from '../../../lib/formato'
+import type { IndiceVigente } from '../../../types/api'
 import type { DatosIndices } from '../hooks/useIndices'
 import { pesosHoy } from '../lib/opciones'
 
 /** Lo que más mira la gente: cuánto se aporta hoy por cumple y cuánto es en pesos. */
-export function IndiceVigenteCard({ datos }: { datos: DatosIndices }) {
-  const { vigente, catalogo, cotizaciones } = datos
+export function IndiceVigenteCard({ datos, vigente }: { datos: DatosIndices; vigente: IndiceVigente }) {
+  const { catalogo, cotizaciones } = datos
   const indice = catalogo.find((i) => i.id === vigente.indice)
   const cotizacion = cotizaciones[vigente.indice]
   if (!indice) return null
@@ -13,7 +14,7 @@ export function IndiceVigenteCard({ datos }: { datos: DatosIndices }) {
   return (
     <Card elevada className="flex flex-col gap-4">
       <p className="text-caption text-texto-suave">
-        Aporte por cumple · vigente desde el {formatearFechaCorta(vigente.vigenteDesde)}
+        Aporte por cumple · elegido por votación el {formatearFechaCorta(vigente.vigenteDesde)} · rige todo el año
       </p>
       <div>
         <p className="text-monto font-extrabold">

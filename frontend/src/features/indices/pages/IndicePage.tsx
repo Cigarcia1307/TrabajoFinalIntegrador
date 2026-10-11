@@ -1,13 +1,13 @@
 import { Card, PillEstado } from '../../../components/ui'
+import { AbrirVotacion } from '../components/AbrirVotacion'
 import { IndiceVigenteCard } from '../components/IndiceVigenteCard'
-import { ProponerCambio } from '../components/ProponerCambio'
 import { VotacionAbiertaCard } from '../components/VotacionAbiertaCard'
-import { useIndices } from '../hooks/useIndices'
+import { useIndices, type DatosIndices } from '../hooks/useIndices'
 
 /**
  * "Índice" (ruta /indice) — Issue #5.
- * Arriba, cuánto se aporta hoy; abajo, la votación abierta (si hay) o,
- * para el administrador, la opción de abrir una nueva.
+ * El índice y la cantidad se votan una sola vez por ciclo y no cambian en el año.
+ * La pantalla muestra lo elegido o, al inicio del ciclo, la votación.
  */
 export function IndicePage() {
   const { estado, enviando, errorAccion, votar, abrir, cerrar } = useIndices()
@@ -18,7 +18,7 @@ export function IndicePage() {
         <h1 className="text-h1 font-extrabold">Índice de referencia</h1>
         <p className="max-w-prose text-texto-suave">
           El aporte se fija en unidades y no en pesos, para que la inflación no lo achique. El grupo elige el índice y
-          la cantidad por votación.
+          la cantidad una vez por año, por votación, y rige para todos los cumples del ciclo.
         </p>
       </header>
 
@@ -33,7 +33,11 @@ export function IndicePage() {
 
       {estado.tipo === 'listo' && (
         <>
-          <IndiceVigenteCard datos={estado.datos} />
+          {estado.datos.vigente ? (
+            <IndiceVigenteCard datos={estado.datos} vigente={estado.datos.vigente} />
+          ) : (
+            <SinIndice datos={estado.datos} />
+          )}
 
           {errorAccion && (
             <p role="alert" className="rounded-control border-2 border-error bg-error-bg p-3 text-caption text-error">
@@ -41,7 +45,7 @@ export function IndicePage() {
             </p>
           )}
 
-          {estado.datos.votacion ? (
+          {estado.datos.votacion && (
             <VotacionAbiertaCard
               datos={estado.datos}
               votacion={estado.datos.votacion}
@@ -49,15 +53,29 @@ export function IndicePage() {
               onVotar={votar}
               onCerrar={cerrar}
             />
-          ) : estado.datos.esAdministrador ? (
-            <ProponerCambio datos={estado.datos} enviando={enviando} onAbrir={abrir} />
-          ) : (
-            <p className="text-caption text-texto-suave">
-              No hay votaciones abiertas. Si el grupo quiere cambiar el índice o la cantidad, la abre un administrador.
-            </p>
+          )}
+
+          {!estado.datos.vigente && !estado.datos.votacion && estado.datos.esAdministrador && (
+            <AbrirVotacion datos={estado.datos} enviando={enviando} onAbrir={abrir} />
           )}
         </>
       )}
     </div>
+  )
+}
+
+/** Inicio del ciclo: todavía no hay índice elegido. */
+function SinIndice({ datos }: { datos: DatosIndices }) {
+  return (
+    <Card className="flex flex-col gap-2">
+      <p className="font-bold">Todavía no se eligió el índice de este año.</p>
+      <p className="text-caption text-texto-suave">
+        {datos.votacion
+          ? 'La votación está abierta: cuando cierre, vas a ver acá cuánto aporta cada uno por cumple.'
+          : datos.esAdministrador
+            ? 'Armá la votación para que el grupo elija con qué aporta este año.'
+            : 'Un administrador va a abrir la votación para que el grupo elija con qué aporta este año.'}
+      </p>
+    </Card>
   )
 }

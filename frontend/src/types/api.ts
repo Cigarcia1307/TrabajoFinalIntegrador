@@ -66,7 +66,7 @@ export interface Colecta {
   activo: boolean
   beneficiarioNombre: string
   esPrimeraVoluntaria: boolean
-  /** Se fija al congelar el monto; antes rige el índice vigente (GET /api/indices/vigente). */
+  /** Se copia de la votación del ciclo al congelar el monto; antes rige GET /api/indices/vigente. */
   indiceReferencia: IndiceId
   /** Unidades del índice por participante (ej. 5 litros). null hasta que se congela el monto. */
   cantidadUnidades: number | null
@@ -97,12 +97,16 @@ export interface OpcionIndice {
   cantidadUnidades: number
 }
 
-export type EstadoVotacion = 'abierta' | 'vigente' | 'reemplazada'
+/** Una sola votación por ciclo: abierta mientras se vota, cerrada cuando ya tiene resultado. */
+export type EstadoVotacion = 'abierta' | 'cerrada'
 
-/** Respuesta de GET /api/indices/vigente — lo que se aplica hoy a las colectas sin congelar. */
+/**
+ * Respuesta de GET /api/indices/vigente — índice y cantidad elegidos para el ciclo actual.
+ * No cambian durante el año. El backend responde 404 si todavía no se votó (el servicio devuelve null).
+ */
 export interface IndiceVigente extends OpcionIndice {
   votacionId: string
-  /** Fecha en que se cerró la votación que lo eligió. */
+  /** Fecha en que se cerró la votación del ciclo. */
   vigenteDesde: string
 }
 
@@ -128,7 +132,7 @@ export interface VotacionAbierta {
   cantidadParticipantes: number
 }
 
-/** Cuerpo de POST /api/indices/votacion (solo ADMINISTRADOR). */
+/** Cuerpo de POST /api/indices/votacion (solo ADMINISTRADOR, una vez por ciclo). */
 export interface NuevaVotacion {
   opciones: OpcionIndice[]
 }

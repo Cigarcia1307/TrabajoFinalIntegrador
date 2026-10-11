@@ -13,21 +13,20 @@ interface Props {
 
 type Borrador = Record<IndiceId, { incluida: boolean; cantidad: string }>
 
-/** Solo ADMINISTRADOR y sin votación abierta: arma una votación nueva para cambiar índice o cantidad. */
-export function ProponerCambio({ datos, enviando, onAbrir }: Props) {
+/** Solo ADMINISTRADOR y solo si el ciclo todavía no tiene votación: abre LA votación del año. */
+export function AbrirVotacion({ datos, enviando, onAbrir }: Props) {
   const [abierto, setAbierto] = useState(false)
   const [borrador, setBorrador] = useState<Borrador>(() => borradorInicial(datos))
 
   if (!abierto) {
     return (
       <Card className="flex flex-col items-start gap-3">
-        <h2 className="text-h3 font-extrabold">¿Cambiar el índice o la cantidad?</h2>
+        <h2 className="text-h3 font-extrabold">Votación del índice del año</h2>
         <p className="text-texto-suave">
-          Si el aporte quedó corto o el grupo prefiere otro índice, abrí una votación. Votan todos los participantes.
+          Armá las opciones para que voten todos los participantes. Hay una sola votación por año y su resultado no se
+          cambia durante el ciclo. Tiene que cerrar antes del primer cumple.
         </p>
-        <Boton variante="secundario" onClick={() => setAbierto(true)}>
-          Proponer un cambio
-        </Boton>
+        <Boton onClick={() => setAbierto(true)}>Armar la votación</Boton>
       </Card>
     )
   }
@@ -48,7 +47,7 @@ export function ProponerCambio({ datos, enviando, onAbrir }: Props) {
         }}
       >
         <header>
-          <h2 className="text-h3 font-extrabold">Nueva votación</h2>
+          <h2 className="text-h3 font-extrabold">Votación del índice del año</h2>
           <p className="text-caption text-texto-suave">
             Elegí al menos 2 opciones y cuántas unidades aporta cada participante en cada una.
           </p>
@@ -124,12 +123,12 @@ export function ProponerCambio({ datos, enviando, onAbrir }: Props) {
   )
 }
 
-/** Arranca con todos los índices marcados; el vigente con su cantidad actual. */
+/** Cantidades sugeridas para arrancar; el admin las ajusta. */
+const CANTIDAD_SUGERIDA: Record<IndiceId, number> = { nafta_ypf: 5, dolar_mep: 5, cajita_feliz: 1 }
+
+/** Arranca con todos los índices marcados y la cantidad sugerida. */
 function borradorInicial(datos: DatosIndices): Borrador {
   return Object.fromEntries(
-    datos.catalogo.map((i) => [
-      i.id,
-      { incluida: true, cantidad: String(i.id === datos.vigente.indice ? datos.vigente.cantidadUnidades : 1) },
-    ]),
+    datos.catalogo.map((i) => [i.id, { incluida: true, cantidad: String(CANTIDAD_SUGERIDA[i.id] ?? 1) }]),
   ) as Borrador
 }

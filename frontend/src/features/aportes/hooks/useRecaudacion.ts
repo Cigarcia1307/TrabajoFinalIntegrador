@@ -3,12 +3,13 @@ import {
   ErrorApi,
   actualizarAporte,
   estaCongelado,
+  listarIndices,
   listarParticipantes,
   obtenerAportes,
   obtenerColecta,
   obtenerResumen,
 } from '../../../services'
-import type { Aporte, Colecta, Participante, ResumenColecta } from '../../../types/api'
+import type { Aporte, Colecta, Indice, Participante, ResumenColecta } from '../../../types/api'
 
 export interface FilaAporte {
   aporte: Aporte
@@ -20,6 +21,9 @@ export interface DatosRecaudacion {
   resumen: ResumenColecta
   filas: FilaAporte[]
   congelado: boolean
+  /** Para armar los recordatorios: alias del recaudador y unidades del índice. */
+  recaudador: Participante | undefined
+  indice: Indice | null
 }
 
 type Estado =
@@ -36,16 +40,24 @@ function prioridad(a: Aporte): number {
 }
 
 async function cargar(colectaId: string): Promise<DatosRecaudacion> {
-  const [colecta, aportes, resumen, participantes] = await Promise.all([
+  const [colecta, aportes, resumen, participantes, indices] = await Promise.all([
     obtenerColecta(colectaId),
     obtenerAportes(colectaId),
     obtenerResumen(colectaId),
     listarParticipantes(),
+    listarIndices(),
   ])
   const filas = aportes
     .map((aporte) => ({ aporte, participante: participantes.find((p) => p.id === aporte.padreId) }))
     .sort((x, y) => prioridad(x.aporte) - prioridad(y.aporte))
-  return { colecta, resumen, filas, congelado: estaCongelado(colecta.montoIndividualPesos) }
+  return {
+    colecta,
+    resumen,
+    filas,
+    congelado: estaCongelado(colecta.montoIndividualPesos),
+    recaudador: participantes.find((p) => p.id === colecta.recaudadorId),
+    indice: indices.find((i) => i.id === colecta.indiceReferencia) ?? null,
+  }
 }
 
 /**

@@ -4,7 +4,7 @@ import { formatearARS, formatearFechaCorta } from '../../../lib/formato'
 import type { IndiceId, VotacionAbierta } from '../../../types/api'
 import { opcionesMasVotadas } from '../../../services'
 import type { DatosIndices } from '../hooks/useIndices'
-import { describirOpcion, mismaOpcion, pesosHoy } from '../lib/opciones'
+import { describirOpcion, pesosHoy } from '../lib/opciones'
 
 interface Props {
   datos: DatosIndices
@@ -22,7 +22,7 @@ export function VotacionAbiertaCard({ datos, votacion, enviando, onVotar, onCerr
     <Card elevada className="flex flex-col gap-5">
       <header className="flex flex-col items-start gap-2">
         <PillEstado estado="pendiente" etiqueta="Votación abierta" />
-        <h2 className="text-h3 font-extrabold">¿Cambiamos el aporte?</h2>
+        <h2 className="text-h3 font-extrabold">¿Con qué aportamos este año?</h2>
         <p className="text-caption text-texto-suave">
           La abrió {votacion.creadaPor} el {formatearFechaCorta(votacion.fechaApertura)} · votaron{' '}
           {votacion.cantidadVotaron} de {votacion.cantidadParticipantes}
@@ -32,8 +32,8 @@ export function VotacionAbiertaCard({ datos, votacion, enviando, onVotar, onCerr
       {yaVoto ? <Resultados datos={datos} votacion={votacion} /> : <Votar datos={datos} votacion={votacion} enviando={enviando} onVotar={onVotar} />}
 
       <p className="text-caption text-texto-suave">
-        Si gana una opción distinta de la actual, se aplica a los cumples que todavía no congelaron su monto. Los
-        que ya se congelaron o se cobraron no cambian.
+        La opción que gane rige para todos los cumples del año y no se cambia hasta el próximo ciclo. Así todos los
+        chicos reciben lo mismo.
       </p>
 
       {datos.esAdministrador && <CerrarVotacion datos={datos} votacion={votacion} enviando={enviando} onCerrar={onCerrar} />}
@@ -75,7 +75,6 @@ function Votar({ datos, votacion, enviando, onVotar }: Pick<Props, 'datos' | 'vo
                 ≈ {formatearARS(pesosHoy(o, datos.cotizaciones))} por persona hoy
               </span>
             </span>
-            {mismaOpcion(o, datos.vigente) && <span className="text-caption font-bold text-texto-suave">Actual</span>}
           </label>
         ))}
       </fieldset>
