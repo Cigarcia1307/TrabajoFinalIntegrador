@@ -37,6 +37,13 @@ public class ParticipanteService {
         participante.setTelefono(datos.getTelefono());
         participante.setCbuAlias(datos.getCbuAlias());
 
+        // Actualiza también los hijos del participante.
+        // Se reemplaza la lista existente por la lista enviada
+        // desde el formulario de edición.
+        if (datos.getHijos() != null) {
+            participante.setHijos(datos.getHijos());
+        }
+
         return repository.save(participante);
     }
 
