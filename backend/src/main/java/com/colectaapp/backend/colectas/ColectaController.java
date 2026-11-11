@@ -17,8 +17,19 @@ public class ColectaController {
     }
 
     @GetMapping
-    public List<Colecta> listar() {
-        return colectaRepository.findAll();
+    public List<Colecta> listar(
+            @RequestParam(required = false) Integer ciclo) {
+
+        List<Colecta> colectas = colectaRepository.findAll();
+
+        return colectas.stream()
+                .filter(colecta -> colecta.isActivo())
+                .filter(colecta ->
+                        ciclo == null ||
+                                colecta.getCicloLectivo() == ciclo)
+                .sorted(java.util.Comparator.comparingInt(
+                        Colecta::getOrdenEnLaRueda))
+                .toList();
     }
 
     @GetMapping("/{id}")

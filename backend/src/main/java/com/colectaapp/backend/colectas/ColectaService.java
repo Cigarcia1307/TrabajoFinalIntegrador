@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ColectaService {
@@ -34,7 +36,10 @@ public class ColectaService {
                 ));
 
         if (colectaRepository.existsByCicloLectivo(anio)) {
-            return;
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Ya existen colectas para el ciclo lectivo " + anio
+            );
         }
 
         var participantes = participanteRepository.findByActivoTrue();
