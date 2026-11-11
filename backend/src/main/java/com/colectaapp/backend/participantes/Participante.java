@@ -1,5 +1,6 @@
 package com.colectaapp.backend.participantes;
 
+import com.colectaapp.backend.auth.Rol;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,10 @@ public class Participante {
     private String email;
     private String telefono;
     private String cbuAlias;
+
+    private String password;
+    private Rol rol = Rol.PARTICIPANTE;
+
     private boolean activo = true;
 
     private List<Beneficiario> hijos = new ArrayList<>();

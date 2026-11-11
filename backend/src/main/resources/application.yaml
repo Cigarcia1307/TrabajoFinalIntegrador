@@ -4,3 +4,6 @@ spring:
   mongodb:
     uri: ${MONGODB_URI}
     database: gestion_cumpleanos
+app:
+  jwt:
+    secret: ${JWT_SECRET}

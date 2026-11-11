@@ -1,111 +1,143 @@
 
-import { useEffect, useState } from 'react'
-import type { Participante } from '../../../types/api'
+import { useEffect, useMemo, useState } from 'react'
+import { Card } from '../../../components/ui'
 import { listarParticipantes } from '../../../services/participantes'
-import { FormularioParticipante } from '../components/FormularioParticipante'
+import type { Participante } from '../../../types/api'
 
 export function GrupoPage() {
   const [participantes, setParticipantes] = useState<Participante[]>([])
-  const [seleccionado, setSeleccionado] = useState<Participante | null>(null)
-  const [mostrarAlta, setMostrarAlta] = useState(false)
+  const [busqueda, setBusqueda] = useState('')
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
 
-  const cargarParticipantes = async () => {
-    try {
-      setError('')
-      const datos = await listarParticipantes()
-      setParticipantes(datos)
-    } catch {
-      setError('No se pudieron cargar los participantes.')
-    } finally {
-      setCargando(false)
-    }
-  }
-
   useEffect(() => {
-    void cargarParticipantes()
+    let activo = true
+
+    listarParticipantes()
+      .then((datos) => {
+        if (activo) setParticipantes(datos)
+      })
+      .catch((err) => {
+        if (activo) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : 'No se pudieron cargar los participantes.',
+          )
+        }
+      })
+      .finally(() => {
+        if (activo) setCargando(false)
+      })
+
+    return () => {
+      activo = false
+    }
   }, [])
 
-  if (seleccionado || mostrarAlta) {
-    return (
-        <div className="space-y-4">
-          <button
-              type="button"
-              className="text-sm font-medium text-tinta hover:underline"
-              onClick={() => {
-                setSeleccionado(null)
-                setMostrarAlta(false)
-                void cargarParticipantes()
-              }}
-          >
-            ← Volver al listado
-          </button>
+  const participantesFiltrados = useMemo(() => {
+    const termino = busqueda.trim().toLowerCase()
 
-          <FormularioParticipante
-              key={seleccionado?.id ?? 'nuevo'}
-              participante={seleccionado ?? undefined}
-          />
-        </div>
+    if (!termino) return participantes
+
+    return participantes.filter((p) =>
+      `${p.nombre} ${p.apellido} ${p.email} ${p.telefono ?? ''}`
+        .toLowerCase()
+        .includes(termino),
     )
-  }
+  }, [participantes, busqueda])
 
   return (
-      <div className="mx-auto max-w-3xl space-y-6">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-2xl font-bold text-tinta">
-            Participantes
-          </h2>
-
-          <button
-              type="button"
-              onClick={() => setMostrarAlta(true)}
-              className="rounded-xl bg-tinta px-4 py-3 font-medium text-white"
-          >
-            + Nuevo participante
-          </button>
-        </div>
-
-        {cargando && <p>Cargando participantes...</p>}
-
-        {error && (
-            <p role="alert" className="text-red-600">
-              {error}
-            </p>
-        )}
-
-        {!cargando && !error && participantes.length === 0 && (
-            <p>Todavía no hay participantes registrados.</p>
-        )}
-
-        {participantes.map(participante => (
-            <div
-                key={participante.id}
-                className="rounded-2xl border border-gray-200 bg-white p-5"
-            >
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <h3 className="font-semibold text-tinta">
-                    {participante.nombre} {participante.apellido}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {participante.email}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {participante.hijos.length} hijo(s)
-                  </p>
-                </div>
-
-                <button
-                    type="button"
-                    className="rounded-xl border border-gray-300 px-4 py-2 font-medium text-tinta hover:bg-gray-50"
-                    onClick={() => setSeleccionado(participante)}
-                >
-                  Editar
-                </button>
-              </div>
-            </div>
-        ))}
+    <section className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-3xl font-bold text-tinta">Mi grupo</h1>
+        <p className="mt-2 text-texto-suave">
+          Familias participantes de ColectaApp.
+        </p>
       </div>
+
+      {!cargando && !error && (
+        <Card className="flex flex-col gap-1">
+          <p className="text-sm text-texto-suave">
+            Participantes registrados
+          </p>
+          <p className="text-3xl font-bold text-tinta">
+            {participantes.length}
+          </p>
+        </Card>
+      )}
+
+      <div>
+        <label htmlFor="buscar-participante" className="mb-2 block font-semibold">
+          Buscar participante
+        </label>
+        <input
+          id="buscar-participante"
+          type="search"
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          placeholder="Nombre, apellido, email o teléfono..."
+          className="w-full rounded-xl border border-borde bg-superficie p-3"
+        />
+      </div>
+
+      {cargando && (
+        <p className="text-texto-suave">Cargando participantes...</p>
+      )}
+
+      {error && (
+        <Card>
+          <p role="alert" className="text-red-600">{error}</p>
+        </Card>
+      )}
+
+      {!cargando && !error && participantesFiltrados.length === 0 && (
+        <Card>
+          <p className="text-texto-suave">
+            {participantes.length === 0
+              ? 'Todavía no hay participantes registrados.'
+              : 'No encontramos participantes con esa búsqueda.'}
+          </p>
+        </Card>
+      )}
+
+      {!cargando && !error && participantesFiltrados.length > 0 && (
+        <div className="grid gap-3 md:grid-cols-2">
+          {participantesFiltrados.map((participante) => (
+            <Card key={participante.id} className="flex flex-col gap-2">
+              <div className="flex items-start justify-between gap-2">
+                <h2 className="font-bold text-tinta">
+                  {participante.nombre} {participante.apellido}
+                </h2>
+                <span className="rounded-full bg-fondo px-3 py-1 text-xs font-semibold">
+                  {participante.activo ? 'Activo' : 'Inactivo'}
+                </span>
+              </div>
+
+              <p className="text-sm text-texto-suave">
+                {participante.email}
+              </p>
+
+              {participante.telefono && (
+                <p className="text-sm">
+                  Teléfono: {participante.telefono}
+                </p>
+              )}
+
+              {participante.hijos?.length > 0 && (
+                <div className="mt-2 border-t border-borde pt-2">
+                  <p className="text-sm font-semibold">Beneficiarios</p>
+                  {participante.hijos.map((hijo, index) => (
+                    <p key={index} className="text-sm text-texto-suave">
+                      {hijo.nombre}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
+    </section>
   )
 }
