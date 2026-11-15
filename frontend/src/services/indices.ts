@@ -1,5 +1,6 @@
 // Módulo 4 · Índices de Referencia (Eugenia)
 import type {
+  CargaCotizacion,
   CierreVotacion,
   Cotizacion,
   Indice,
@@ -53,12 +54,28 @@ export async function obtenerCotizacionActual(indice: IndiceId): Promise<Cotizac
     .filter((p) => p.indice === indice)
     .sort((a, b) => b.fecha.localeCompare(a.fecha))[0]
   if (!ultima) throw noEncontrado('Cotización')
-  return responder({ indice, fecha: ultima.fecha, valorUnitarioArs: ultima.valorUnitarioArs })
+  // En los mocks, la Cajita Feliz se carga a mano y los otros dos son automáticos (como en el backend).
+  const fuente = indice === 'cajita_feliz' ? 'cargada' : 'automatica'
+  return responder({ indice, fecha: ultima.fecha, valorUnitarioArs: ultima.valorUnitarioArs, fuente })
+}
+
+/**
+ * POST /api/indices/{indice}/cotizaciones — solo ADMINISTRADOR. Carga un precio a mano:
+ * es la fuente de la Cajita Feliz y el respaldo de los automáticos si su fuente falla.
+ */
+export async function cargarCotizacion(indice: IndiceId, carga: CargaCotizacion): Promise<Cotizacion> {
+  if (!USAR_MOCKS) return api.post(`/api/indices/${indice}/cotizaciones`, carga)
+
+  exigirAdministrador()
+  if (!(carga.valorUnitarioArs > 0)) throw new ErrorApi(400, 'El precio tiene que ser mayor a 0')
+  const fecha = carga.fecha ?? hoy()
+  preciosReferencia.push({ id: `precio-${Date.now()}`, indice, fecha, valorUnitarioArs: carga.valorUnitarioArs })
+  return responder({ indice, fecha, valorUnitarioArs: carga.valorUnitarioArs, fuente: 'cargada' })
 }
 
 /** GET /api/indices/votacion — la votación del ciclo si está abierta, o null (el backend responde 204). */
 export async function obtenerVotacionAbierta(): Promise<VotacionAbierta | null> {
-  if (!USAR_MOCKS) return api.get('/api/indices/votacion')
+  if (!USAR_MOCKS) return (await api.get<VotacionAbierta | undefined>('/api/indices/votacion')) ?? null
 
   const v = votacionDelCiclo()
   return responder(v?.estado === 'abierta' ? vistaDe(v) : null)
@@ -151,7 +168,7 @@ const votacionDelCiclo = () => votaciones.find((x) => x.cicloLectivo === CICLO_A
 
 function exigirAdministrador() {
   if (roles[idUsuarioMock()] !== 'ADMINISTRADOR') {
-    throw prohibido('Solo un administrador puede abrir o cerrar votaciones')
+    throw prohibido('Solo un administrador puede hacer esto')
   }
 }
 

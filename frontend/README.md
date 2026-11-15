@@ -119,6 +119,10 @@ localStorage.setItem('colectaapp.escenarioVotacion', 'sin-votacion') // ciclo si
 localStorage.removeItem('colectaapp.escenarioVotacion')              // volver a la votación cerrada
 ```
 
+### Precios de los índices (administrador)
+
+Como Juan (administrador), la pantalla `/indice` muestra el precio de hoy de cada índice y de dónde sale (automático o cargado a mano), y un formulario para cargar un precio. En el backend, la Cajita Feliz solo tiene precio si un administrador lo carga; el dólar MEP y la nafta se obtienen solos (ver Módulo 4 en el README principal).
+
 ### Recordatorios de pago
 
 Se calculan con la fecha del cumple (ver `src/features/aportes/lib/recordatorios.ts`), así que dependen del día en que se prueben. El participante que no pagó ve un aviso que sube de tono a partir del día siguiente al cumple y a partir de la semana. El recaudador ve, con el monto congelado, un recordatorio para el grupo (sin nombres) y uno individual por cada pendiente.

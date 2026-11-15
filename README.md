@@ -111,6 +111,13 @@ erDiagram
         date fecha
         number valor_unitario_ars
     }
+    COTIZACION_CARGADA {
+        ObjectId _id
+        string indice
+        date fecha
+        number valor_unitario_ars
+        string cargada_por
+    }
     VOTACION_INDICE {
         ObjectId _id
         number ciclo_lectivo
@@ -190,7 +197,17 @@ GET    /api/colectas/{id}/recaudador
 
 ### Módulo 4 · Índices de Referencia (patrón Strategy)
 Resuelve la cotización de cada índice sin acoplar el servicio de colectas a uno en particular. El índice **y la cantidad de unidades** por participante (ej. 5 litros de nafta) se fijan por **una única votación** de todos los participantes al inicio del ciclo lectivo y **no se modifican durante el año**, para que todos los cumpleañeros reciban lo mismo en unidades.
-**Clases:** `CotizacionStrategy` (interfaz), `NaftaYpfStrategy`, `DolarMepStrategy`, `CajitaFelizStrategy`, `VotacionIndice`, `IndiceReferenciaController`, `VotacionIndiceService`.
+**Clases:** `Indice` (enum), `CotizacionStrategy` (interfaz), `NaftaYpfStrategy`, `DolarMepStrategy`, `CajitaFelizStrategy`, `CotizacionService`, `CotizacionCargada`, `VotacionIndice`, `VotacionIndiceService`, `IndiceController` (paquete `backend/.../indices`).
+
+**De dónde sale cada cotización (una Strategy por índice):** lo que se puede obtener solo, se obtiene solo; lo que no tiene fuente pública, lo carga un administrador.
+
+| Índice | Fuente | Strategy |
+|---|---|---|
+| Dólar MEP | **Automática:** API pública (`app.cotizaciones.dolar-mep-url`, por defecto dolarapi.com, dólar bolsa) | `DolarMepStrategy` |
+| Nafta súper YPF | **Automática:** datos abiertos oficiales "Precios en surtidor" (Resolución 314/2016, Secretaría de Energía). Descarga el CSV (`app.cotizaciones.nafta-csv-url`), filtra YPF + nafta súper + horario diurno + provincia (`app.cotizaciones.nafta-provincia`) y toma la mediana. Guarda el resultado 6 horas. | `NaftaYpfStrategy` |
+| Cajita Feliz | **Manual:** no hay fuente pública; un administrador carga el precio en la pantalla de Índice | `CajitaFelizStrategy` |
+
+Si una fuente automática falla (o la URL no está configurada), su Strategy usa el último precio cargado por un administrador (colección `cotizacion_cargada`). Agregar o cambiar la fuente de un índice es cambiar solo su Strategy: el resto del sistema (incluido el congelamiento del Módulo 5) usa `CotizacionService` sin saber de dónde sale el valor.
 ```
 GET    /api/indices                            # catálogo de índices (nombre y unidad)
 GET    /api/indices/vigente                    # índice y cantidad elegidos para el ciclo actual (404 si todavía no se votó)
@@ -198,8 +215,11 @@ GET    /api/indices/votacion                   # votación abierta del ciclo: op
 POST   /api/indices/votacion                   # solo ADMINISTRADOR: abre la votación del ciclo (409 si el ciclo ya tiene una)
 POST   /api/indices/votar                      # un voto por participante (409 si ya votó)
 POST   /api/indices/votacion/cerrar            # solo ADMINISTRADOR: la más votada queda fija para todo el ciclo
-GET    /api/indices/{indice}/cotizacion-actual
+GET    /api/indices/{indice}/cotizacion-actual # valor de hoy de 1 unidad, según su Strategy (503 si no hay ninguno)
+POST   /api/indices/{indice}/cotizaciones      # solo ADMINISTRADOR: carga un precio a mano (fuente de la Cajita Feliz y respaldo de los automáticos)
 ```
+
+> Para el Módulo 5: `VotacionIndiceService.resultadoDelCiclo(ciclo)` devuelve el índice y la cantidad elegidos para un ciclo, y `CotizacionService.obtenerCotizacionActual(indice)` el valor del día. Con eso se calcula `monto_individual_pesos = cantidad_unidades × valor_unitario_ars`.
 
 ### Módulo 5 · Congelamiento de Montos
 Scheduler/Cron Job que fija el valor en pesos el día hábil previo a cada colecta, persistiéndolo en `precio_referencia` y en `monto_individual_pesos`. En ese mismo momento copia a la colecta el `indice_referencia` y la `cantidad_unidades` de la votación del ciclo (Módulo 4): `monto_individual_pesos = cantidad_unidades × valor_unitario_ars`.

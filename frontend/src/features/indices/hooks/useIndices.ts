@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   abrirVotacion,
+  cargarCotizacion,
   cerrarVotacion,
   listarIndices,
   obtenerCotizacionActual,
@@ -10,6 +11,7 @@ import {
   votarIndice,
 } from '../../../services'
 import type {
+  CargaCotizacion,
   Cotizacion,
   Indice,
   IndiceId,
@@ -26,8 +28,8 @@ export interface DatosIndices {
   /** null mientras la votación del ciclo no cerró. */
   vigente: IndiceVigente | null
   votacion: VotacionAbierta | null
-  /** Cotización de hoy de cada índice, para mostrar cuánto serían en pesos. */
-  cotizaciones: Record<IndiceId, Cotizacion>
+  /** Cotización de hoy de cada índice. Falta la de un índice si no tiene precio (ej. Cajita sin cargar). */
+  cotizaciones: Partial<Record<IndiceId, Cotizacion>>
 }
 
 type Estado =
@@ -42,8 +44,10 @@ async function cargar(): Promise<DatosIndices> {
     obtenerIndiceVigente(),
     obtenerVotacionAbierta(),
   ])
-  const lista = await Promise.all(catalogo.map((i) => obtenerCotizacionActual(i.id)))
-  const cotizaciones = Object.fromEntries(lista.map((c) => [c.indice, c])) as Record<IndiceId, Cotizacion>
+  // Si un índice no tiene precio, la pantalla igual carga: solo falta ese valor.
+  const lista = await Promise.all(catalogo.map((i) => obtenerCotizacionActual(i.id).catch(() => null)))
+  const cotizaciones: Partial<Record<IndiceId, Cotizacion>> = {}
+  for (const c of lista) if (c) cotizaciones[c.indice] = c
   return { usuario, esAdministrador: usuario.rol === 'ADMINISTRADOR', catalogo, vigente, votacion, cotizaciones }
 }
 
@@ -88,6 +92,10 @@ export function useIndices() {
   const votar = useCallback((indice: IndiceId) => ejecutar(() => votarIndice(indice)), [ejecutar])
   const abrir = useCallback((opciones: OpcionIndice[]) => ejecutar(() => abrirVotacion({ opciones })), [ejecutar])
   const cerrar = useCallback((desempate?: IndiceId) => ejecutar(() => cerrarVotacion({ desempate })), [ejecutar])
+  const cargarPrecio = useCallback(
+    (indice: IndiceId, carga: CargaCotizacion) => ejecutar(() => cargarCotizacion(indice, carga)),
+    [ejecutar],
+  )
 
-  return { estado, enviando, errorAccion, votar, abrir, cerrar }
+  return { estado, enviando, errorAccion, votar, abrir, cerrar, cargarPrecio }
 }
