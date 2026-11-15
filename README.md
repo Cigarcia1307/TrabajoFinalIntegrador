@@ -301,6 +301,20 @@ gradlew bootRun
 
 En Git Bash: `export MONGODB_URI=...`, `export JWT_SECRET=...` y `./gradlew bootRun`. Para solo verificar que compila (sin base de datos): `gradlew compileJava`.
 
+**Pruebas automáticas** (JUnit 5 + Mockito + AssertJ), desde la carpeta `backend`:
+
+```
+gradlew test
+```
+
+Las pruebas de los módulos usan *mocks* de los repositorios, así que no necesitan base de datos; solo `BackendApplicationTests` (que levanta la aplicación completa) necesita `MONGODB_URI` y `JWT_SECRET`. Para correr únicamente las de un módulo: `gradlew test --tests "com.colectaapp.backend.aportes.*"`. El reporte queda en `backend/build/reports/tests/test/index.html`.
+
+| Prueba | Qué comprueba |
+|---|---|
+| `aportes/AporteServiceTest` | Regla de visibilidad (participante / recaudador), creación de aportes sin el padre del cumpleañero y sin duplicados, solo el recaudador registra pagos, no se paga sin monto congelado, colecta cerrada no se modifica, deshacer pago, no participar anula el pago, cálculo del resumen. |
+| `indices/votacion/VotacionIndiceServiceTest` | Una sola votación por ciclo, opciones válidas, voto único, conteo sin revelar quién votó qué, gana la más votada, empate decidido por el administrador, votación cerrada sin cambios. |
+| `indices/cotizaciones/NaftaYpfStrategyTest` | Lectura del CSV de Energía (comas entre comillas, tildes), mediana resistente a valores raros, descarte de precios desactualizados. |
+
 **Frontend:** ver [`frontend/README.md`](frontend/README.md). Para usar el backend real en vez de los datos de prueba, en `frontend/.env` poner `VITE_USAR_MOCKS=false`.
 
 ---
