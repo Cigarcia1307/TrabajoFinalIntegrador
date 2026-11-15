@@ -73,4 +73,4 @@ public class Colecta {
      */
     @JsonIgnore
     private List<Aporte> aportes = new ArrayList<>();
-}
+}
