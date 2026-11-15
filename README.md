@@ -204,7 +204,7 @@ Resuelve la cotización de cada índice sin acoplar el servicio de colectas a un
 | Índice | Fuente | Strategy |
 |---|---|---|
 | Dólar MEP | **Automática:** API pública (`app.cotizaciones.dolar-mep-url`, por defecto dolarapi.com, dólar bolsa) | `DolarMepStrategy` |
-| Nafta súper YPF | **Automática:** datos abiertos oficiales "Precios en surtidor" (Resolución 314/2016, Secretaría de Energía). Descarga el CSV (`app.cotizaciones.nafta-csv-url`), filtra YPF + nafta súper + horario diurno + provincia (`app.cotizaciones.nafta-provincia`) y toma la mediana. Guarda el resultado 6 horas. | `NaftaYpfStrategy` |
+| Nafta súper YPF | **Automática:** datos abiertos oficiales "Precios vigentes en surtidor" (Resolución 314/2016, Secretaría de Energía). Descarga el CSV (`app.cotizaciones.nafta-csv-url`, ya configurado por defecto), filtra YPF + nafta súper + horario diurno + provincia (`app.cotizaciones.nafta-provincia`), descarta las estaciones que no actualizan su precio (más de 30 días antes del dato más reciente) y toma la mediana. Guarda el resultado 6 horas. El dato es tan reciente como lo publique Energía: la fecha que se muestra es la del precio más nuevo del archivo. | `NaftaYpfStrategy` |
 | Cajita Feliz | **Manual:** no hay fuente pública; un administrador carga el precio en la pantalla de Índice | `CajitaFelizStrategy` |
 
 Si una fuente automática falla (o la URL no está configurada), su Strategy usa el último precio cargado por un administrador (colección `cotizacion_cargada`). Agregar o cambiar la fuente de un índice es cambiar solo su Strategy: el resto del sistema (incluido el congelamiento del Módulo 5) usa `CotizacionService` sin saber de dónde sale el valor.

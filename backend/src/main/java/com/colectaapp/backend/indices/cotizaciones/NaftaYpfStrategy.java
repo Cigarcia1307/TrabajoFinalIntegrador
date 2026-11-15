@@ -28,9 +28,14 @@ import java.util.Locale;
  * La Resolución 314/2016 obliga a las estaciones de servicio a informar sus precios;
  * la Secretaría de Energía los publica como CSV ("Precios en surtidor", datos.energia.gob.ar).
  * Esta strategy descarga ese CSV, filtra YPF + nafta súper + horario diurno + la provincia
- * configurada, y toma la MEDIANA de los precios (así una estación con un precio raro no
- * mueve el resultado). Guarda el resultado en memoria unas horas para no descargar el
- * archivo en cada consulta.
+ * configurada, se queda con los precios ACTUALIZADOS (los informados dentro de los
+ * {@value #DIAS_VIGENCIA} días previos al dato más reciente, así una estación que no
+ * actualiza hace meses no tira el valor para abajo) y toma la MEDIANA (así una estación
+ * con un precio raro tampoco lo mueve). Guarda el resultado en memoria unas horas para
+ * no descargar el archivo en cada consulta.
+ *
+ * Ojo: el dato es tan reciente como lo publique Energía; la fecha de la cotización
+ * es la del precio más nuevo del archivo, no la de hoy.
  *
  * Si la URL no está configurada o la descarga falla, usa el último precio cargado
  * por un administrador.
@@ -40,6 +45,8 @@ public class NaftaYpfStrategy implements CotizacionStrategy {
 
     private static final Logger log = LoggerFactory.getLogger(NaftaYpfStrategy.class);
     private static final Duration CACHE = Duration.ofHours(6);
+    /** Precios informados hasta estos días antes del más reciente cuentan como actualizados. */
+    static final int DIAS_VIGENCIA = 30;
 
     private final CotizacionCargadaService cargadas;
     private final String url;
@@ -114,8 +121,7 @@ public class NaftaYpfStrategy implements CotizacionStrategy {
             int colHorario = columnas.indexOf("tipohorario"); // opcional
 
             String provinciaBuscada = normalizar(provincia);
-            List<Double> precios = new ArrayList<>();
-            LocalDate fechaMasReciente = null;
+            List<PrecioInformado> informados = new ArrayList<>();
 
             String linea;
             while ((linea = lector.readLine()) != null) {
@@ -135,20 +141,47 @@ public class NaftaYpfStrategy implements CotizacionStrategy {
                 if (precio == null || precio <= 0) {
                     continue;
                 }
-                precios.add(precio);
-                LocalDate fecha = fecha(campos.get(colFecha));
-                if (fecha != null && (fechaMasReciente == null || fecha.isAfter(fechaMasReciente))) {
-                    fechaMasReciente = fecha;
-                }
+                informados.add(new PrecioInformado(precio, fecha(campos.get(colFecha))));
             }
 
-            if (precios.isEmpty()) {
+            if (informados.isEmpty()) {
                 throw new IllegalStateException("No hay precios de YPF nafta súper para " + provincia);
             }
-            return new Cotizacion(getIndice().getId(),
-                    fechaMasReciente != null ? fechaMasReciente : LocalDate.now(),
-                    mediana(precios), Cotizacion.AUTOMATICA);
+            return calcular(informados);
         }
+    }
+
+    /** Un precio de una estación y desde cuándo rige (null si el CSV no trae una fecha válida). */
+    record PrecioInformado(double precio, LocalDate fecha) {
+    }
+
+    /**
+     * Mediana de los precios actualizados. Si ninguno tiene fecha, usa todos.
+     * La fecha de la cotización es la del precio más reciente.
+     */
+    Cotizacion calcular(List<PrecioInformado> informados) {
+        LocalDate masReciente = informados.stream()
+                .map(PrecioInformado::fecha)
+                .filter(f -> f != null)
+                .max(LocalDate::compareTo)
+                .orElse(null);
+
+        List<Double> precios;
+        if (masReciente == null) {
+            precios = informados.stream().map(PrecioInformado::precio).toList();
+        } else {
+            LocalDate desde = masReciente.minusDays(DIAS_VIGENCIA);
+            precios = informados.stream()
+                    .filter(p -> p.fecha() != null && !p.fecha().isBefore(desde))
+                    .map(PrecioInformado::precio)
+                    .toList();
+        }
+        log.info("Nafta YPF {}: {} precios actualizados de {} informados (más reciente: {})",
+                provincia, precios.size(), informados.size(), masReciente);
+
+        return new Cotizacion(getIndice().getId(),
+                masReciente != null ? masReciente : LocalDate.now(),
+                mediana(precios), Cotizacion.AUTOMATICA);
     }
 
     // ── Ayudas para leer el CSV ─────────────────────────────────────────────

@@ -148,9 +148,11 @@ function CerrarVotacion({ datos, votacion, enviando, onCerrar }: Pick<Props, 'da
         <span className="font-bold">
           Votaron {votacion.cantidadVotaron} de {votacion.cantidadParticipantes}.
         </span>{' '}
-        {hayEmpate
-          ? 'Hay empate: elegí cuál de estas opciones queda vigente.'
-          : `Va a quedar vigente: ${describirOpcion(empatadas[0], datos.catalogo)}.`}
+        {votacion.cantidadVotaron === 0
+          ? 'Todavía nadie votó: si cerrás ahora, elegí vos cuál opción rige todo el año.'
+          : hayEmpate
+            ? 'Hay empate: elegí cuál de estas opciones rige todo el año.'
+            : `Va a regir todo el año: ${describirOpcion(empatadas[0], datos.catalogo)}.`}
       </p>
       {hayEmpate && (
         <fieldset className="flex flex-col gap-2">
