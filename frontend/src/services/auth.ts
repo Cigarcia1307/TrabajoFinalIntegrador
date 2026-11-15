@@ -13,6 +13,8 @@ interface AuthResponse {
   email: string
   nombre: string
   rol: Rol
+  /** Id del participante (padres). Necesario para aportes y recaudador. */
+  id?: string
 }
 
 interface LoginRequest {
@@ -93,7 +95,8 @@ export async function obtenerUsuarioActual(): Promise<UsuarioActual> {
     const respuesta = await api.get<AuthResponse>('/api/auth/me')
 
     return {
-      id: respuesta.email,
+      // El id real del participante: los aportes y el recaudador se comparan por id, no por email.
+      id: respuesta.id ?? respuesta.email,
       nombre: respuesta.nombre,
       apellido: '',
       email: respuesta.email,

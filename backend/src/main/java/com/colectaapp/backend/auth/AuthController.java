@@ -101,7 +101,8 @@ public class AuthController {
                 "Bearer",
                 participante.getEmail(),
                 participante.getNombre(),
-                participante.getRol().name());
+                participante.getRol().name(),
+                participante.getId());
     }
 
     @PostMapping("/login")
@@ -133,7 +134,8 @@ public class AuthController {
                 "Bearer",
                 participante.getEmail(),
                 participante.getNombre(),
-                participante.getRol().name());
+                participante.getRol().name(),
+                participante.getId());
     }
 
     @GetMapping("/me")
@@ -153,6 +155,7 @@ public class AuthController {
                 "Bearer",
                 participante.getEmail(),
                 participante.getNombre(),
-                participante.getRol().name());
+                participante.getRol().name(),
+                participante.getId());
     }
 }
