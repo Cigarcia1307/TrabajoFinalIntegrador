@@ -184,6 +184,32 @@ Registra la votación del índice de referencia y de la **cantidad de unidades**
 }
 ```
 
+> El índice único sobre `ciclo_lectivo` está declarado en el código (`@Indexed(unique = true)`), pero Spring no crea índices automáticamente por defecto: hay que crearlo en Atlas (`{ ciclo_lectivo: 1 }`, único). El backend igualmente rechaza una segunda votación para el mismo ciclo.
+
+---
+
+### 2.5 `cotizacion_cargada`
+
+Precios de los índices **cargados a mano por un administrador** (Módulo 4). Es la fuente de los índices sin fuente pública (Cajita Feliz) y el respaldo de los automáticos (dólar MEP, nafta) si su fuente falla. No reemplaza a `precio_referencia`: esa colección guarda el valor con el que se **congeló** cada colecta (Módulo 5).
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `_id` | ObjectId | Identificador único |
+| `indice` | String | `"nafta_ypf"`, `"dolar_mep"` o `"cajita_feliz"` |
+| `fecha` | Date | Fecha del precio |
+| `valor_unitario_ars` | Number | Pesos por unidad (ej. 1 cajita = 15200) |
+| `cargada_por` | String | Email del administrador que lo cargó |
+
+**Ejemplo:**
+```json
+{
+  "indice": "cajita_feliz",
+  "fecha": { "$date": "2026-11-15T00:00:00.000Z" },
+  "valor_unitario_ars": 15200,
+  "cargada_por": "juan.perez@gmail.com"
+}
+```
+
 ---
 
 ## 3. Relaciones entre colecciones
@@ -263,3 +289,6 @@ Para optimizar las consultas más frecuentes del sistema se definen los siguient
 
 ### Colección `votacion_indice`
 - `ciclo_lectivo`: índice único, garantiza una sola votación por ciclo y permite obtener rápidamente la del ciclo actual.
+
+### Colección `cotizacion_cargada`
+- Índice compuesto por `indice` y `fecha` (descendente): permite obtener rápidamente el último precio cargado de cada índice.

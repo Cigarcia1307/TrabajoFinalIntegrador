@@ -1,6 +1,7 @@
 import { Card, PillEstado } from '../../../components/ui'
 import { AbrirVotacion } from '../components/AbrirVotacion'
 import { IndiceVigenteCard } from '../components/IndiceVigenteCard'
+import { PreciosIndices } from '../components/PreciosIndices'
 import { VotacionAbiertaCard } from '../components/VotacionAbiertaCard'
 import { useIndices, type DatosIndices } from '../hooks/useIndices'
 
@@ -10,7 +11,7 @@ import { useIndices, type DatosIndices } from '../hooks/useIndices'
  * La pantalla muestra lo elegido o, al inicio del ciclo, la votación.
  */
 export function IndicePage() {
-  const { estado, enviando, errorAccion, votar, abrir, cerrar } = useIndices()
+  const { estado, enviando, errorAccion, votar, abrir, cerrar, cargarPrecio } = useIndices()
 
   return (
     <div className="flex flex-col gap-8">
@@ -57,6 +58,10 @@ export function IndicePage() {
 
           {!estado.datos.vigente && !estado.datos.votacion && estado.datos.esAdministrador && (
             <AbrirVotacion datos={estado.datos} enviando={enviando} onAbrir={abrir} />
+          )}
+
+          {estado.datos.esAdministrador && (
+            <PreciosIndices datos={estado.datos} enviando={enviando} onCargar={cargarPrecio} />
           )}
         </>
       )}

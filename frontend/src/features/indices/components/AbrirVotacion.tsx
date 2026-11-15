@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { Boton, Card } from '../../../components/ui'
-import { formatearARS } from '../../../lib/formato'
 import type { IndiceId, OpcionIndice } from '../../../types/api'
 import type { DatosIndices } from '../hooks/useIndices'
-import { pesosHoy } from '../lib/opciones'
+import { textoPesosHoy } from '../lib/opciones'
 
 interface Props {
   datos: DatosIndices
@@ -95,8 +94,7 @@ export function AbrirVotacion({ datos, enviando, onAbrir }: Props) {
                 </div>
                 {fila.incluida && cantidad > 0 && (
                   <p className="col-start-2 text-caption text-texto-suave tabular-nums sm:col-span-2">
-                    ≈ {formatearARS(pesosHoy({ indice: indice.id, cantidadUnidades: cantidad }, datos.cotizaciones))} por
-                    persona hoy
+                    {textoPesosHoy({ indice: indice.id, cantidadUnidades: cantidad }, datos.cotizaciones)}
                   </p>
                 )}
               </div>

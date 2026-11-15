@@ -147,6 +147,16 @@ export interface Cotizacion {
   indice: IndiceId
   fecha: string
   valorUnitarioArs: number
+  /** automatica: API o datos abiertos · cargada: la cargó un administrador. */
+  fuente: FuenteCotizacion
+}
+
+export type FuenteCotizacion = 'automatica' | 'cargada'
+
+/** Cuerpo de POST /api/indices/{indice}/cotizaciones (solo ADMINISTRADOR). Sin fecha = hoy. */
+export interface CargaCotizacion {
+  valorUnitarioArs: number
+  fecha?: string
 }
 
 // ── Módulo 5 · Congelamiento de Montos ──────────────────────────────────────

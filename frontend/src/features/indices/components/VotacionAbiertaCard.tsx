@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Boton, Card, PillEstado } from '../../../components/ui'
-import { formatearARS, formatearFechaCorta } from '../../../lib/formato'
+import { formatearFechaCorta } from '../../../lib/formato'
 import type { IndiceId, VotacionAbierta } from '../../../types/api'
 import { opcionesMasVotadas } from '../../../services'
 import type { DatosIndices } from '../hooks/useIndices'
-import { describirOpcion, pesosHoy } from '../lib/opciones'
+import { describirOpcion, textoPesosHoy } from '../lib/opciones'
 
 interface Props {
   datos: DatosIndices
@@ -72,7 +72,7 @@ function Votar({ datos, votacion, enviando, onVotar }: Pick<Props, 'datos' | 'vo
             <span className="flex flex-1 flex-col">
               <span className="font-bold">{describirOpcion(o, datos.catalogo)}</span>
               <span className="text-caption text-texto-suave tabular-nums">
-                ≈ {formatearARS(pesosHoy(o, datos.cotizaciones))} por persona hoy
+                {textoPesosHoy(o, datos.cotizaciones)}
               </span>
             </span>
           </label>
@@ -148,9 +148,11 @@ function CerrarVotacion({ datos, votacion, enviando, onCerrar }: Pick<Props, 'da
         <span className="font-bold">
           Votaron {votacion.cantidadVotaron} de {votacion.cantidadParticipantes}.
         </span>{' '}
-        {hayEmpate
-          ? 'Hay empate: elegí cuál de estas opciones queda vigente.'
-          : `Va a quedar vigente: ${describirOpcion(empatadas[0], datos.catalogo)}.`}
+        {votacion.cantidadVotaron === 0
+          ? 'Todavía nadie votó: si cerrás ahora, elegí vos cuál opción rige todo el año.'
+          : hayEmpate
+            ? 'Hay empate: elegí cuál de estas opciones rige todo el año.'
+            : `Va a regir todo el año: ${describirOpcion(empatadas[0], datos.catalogo)}.`}
       </p>
       {hayEmpate && (
         <fieldset className="flex flex-col gap-2">
