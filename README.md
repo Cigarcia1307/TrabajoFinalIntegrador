@@ -231,13 +231,19 @@ POST   /api/precios-referencia/congelar/{colectaId}
 
 ### Módulo 6 · Aportes y Pagos
 Registra la decisión de participación (`participa`) y el estado de pago de cada participante por colecta, resolviendo el problema de transparencia planteado en la propuesta original. Aplica una regla de visibilidad por autorización a nivel de recurso: cada participante ve únicamente su propia entrada; solo el recaudador de esa colecta puntual (`recaudador_id`, Módulo 3) puede ver el estado de todos y el resumen agregado. Este filtro se resuelve siempre en el backend — nunca alcanza con ocultarlo en el frontend, porque la respuesta completa quedaría expuesta a cualquiera que inspeccione la llamada a la API.
-**Clases:** `Aporte` (embebido, con campo `participa`), `AporteController`, `AporteService`, `ReporteDeudaService`.
+**Clases:** `Aporte` (embebido, con campo `participa`), `AporteController`, `AporteService` (paquete `backend/.../aportes`). La deuda pendiente la resuelve `AporteService`; no hizo falta un `ReporteDeudaService` aparte.
 ```
 GET    /api/colectas/{id}/aportes              # recaudador: array completo · participante: solo su propia entrada
 PATCH  /api/colectas/{id}/aportes/{padreId}     # registra decisión de participación y/o marca el pago
 GET    /api/colectas/{id}/deuda-pendiente       # solo recaudador
 GET    /api/colectas/{id}/resumen               # solo recaudador: recaudado vs. monto_total_objetivo, cantidad de pendientes
 ```
+
+**Reglas que aplica el backend:** solo el recaudador registra pagos (403 si no); no se registran pagos hasta que el monto esté congelado (409); en una colecta cerrada no se modifica nada (403); si alguien decide no participar, su aporte vuelve a no pagado.
+
+**Aportes de cada colecta:** las colectas que genera el Módulo 3 nacen sin aportes. La primera vez que se consultan, `AporteService` crea uno por cada participante activo, menos el padre del cumpleañero, con `participa: null` y `pagado: false`. Si después se suma un participante, también se le agrega su aporte (solo en colectas abiertas).
+
+**Privacidad:** en `Colecta` el campo `aportes` lleva `@JsonIgnore`, así `GET /api/colectas` no expone el estado de todos; los aportes solo se consultan por estos endpoints, que aplican la regla de visibilidad.
 
 **Recordatorios de pago (dentro del MVP, sin mails):** se resuelven en el frontend con los datos que ya devuelven estos endpoints, sin campos ni endpoints nuevos. Al participante que todavía no pagó le aparece un aviso desde que el monto se congela, que sube de tono según los días que pasaron desde el cumpleaños (el festejo y la entrega del regalo suelen ser posteriores). El recaudador tiene dos botones para copiar texto: un recordatorio para el grupo de WhatsApp **sin nombres** (respeta la regla de visibilidad) y uno individual junto a cada pendiente, para mandar por privado.
 
@@ -272,6 +278,30 @@ GET    /api/colectas/{id}/resumen               # solo recaudador: recaudado vs.
 | **Despliegue Frontend** | Netlify | Facilita el despliegue del frontend directamente desde GitHub, con integración continua por rama. |
 | **Despliegue Backend** | Render | Permite desplegar el backend sin administrar un servidor propio. Se evaluará el uso de Docker solo si fuera necesario. |
 | **Control de versiones** | Git + GitHub | Permite trabajar colaborativamente y cumplir con el requisito de un único repositorio para todo el proyecto. |
+
+---
+
+## 🚀 Cómo correr el proyecto en local
+
+**Backend** (Java 21 + Gradle). Necesita dos variables de entorno, que **nunca** se escriben en archivos del repo:
+
+| Variable | Qué es | De dónde sale |
+|---|---|---|
+| `MONGODB_URI` | Cadena de conexión a Atlas (`mongodb+srv://usuario:contraseña@cluster...`) | Atlas → Connect → Drivers. Pedir un usuario de base de datos y que habiliten tu IP en *Network Access*. |
+| `JWT_SECRET` | Clave para firmar los tokens de sesión (mínimo 32 caracteres) | La elige cada uno para su entorno local. |
+| `NAFTA_CSV_URL` | *Opcional.* CSV de precios en surtidor (Módulo 4) | Datos Energía → "Precios en surtidor" → recurso de precios vigentes. Sin ella, la nafta usa el precio cargado a mano. |
+
+En CMD (Windows), desde la carpeta `backend`:
+
+```
+set MONGODB_URI=mongodb+srv://...
+set JWT_SECRET=una-clave-local-de-al-menos-32-caracteres
+gradlew bootRun
+```
+
+En Git Bash: `export MONGODB_URI=...`, `export JWT_SECRET=...` y `./gradlew bootRun`. Para solo verificar que compila (sin base de datos): `gradlew compileJava`.
+
+**Frontend:** ver [`frontend/README.md`](frontend/README.md). Para usar el backend real en vez de los datos de prueba, en `frontend/.env` poner `VITE_USAR_MOCKS=false`.
 
 ---
 
