@@ -1,0 +1,20 @@
+# Publicación del frontend en Netlify.
+# El frontend vive en /frontend; sin variables definidas usa los datos de prueba (mocks).
+# Para usar el backend real, en Netlify > Site configuration > Environment variables:
+#   VITE_USAR_MOCKS = false
+#   VITE_API_URL    = <URL del backend publicado>
+
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# La app maneja sus propias rutas (React Router). Sin esta regla,
+# recargar la página en /aportes o /indices daría error 404.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
