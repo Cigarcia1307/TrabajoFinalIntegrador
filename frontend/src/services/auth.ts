@@ -76,14 +76,21 @@ export async function registrarse(
   return respuesta
 }
 
+interface InvitacionResponse {
+  token: string
+  email: string
+  fechaExpiracion: string
+  utilizada: boolean
+}
+
 export async function crearInvitacion(
-  datos: InvitacionRequest,
-): Promise<void> {
+    datos: InvitacionRequest,
+): Promise<InvitacionResponse> {
   if (USAR_MOCKS) {
     throw new Error('Las invitaciones requieren el backend real.')
   }
 
-  await api.post('/api/auth/invitaciones', datos)
+  return api.post<InvitacionResponse>('/api/auth/invitaciones', datos)
 }
 
 export function cerrarSesion(): void {

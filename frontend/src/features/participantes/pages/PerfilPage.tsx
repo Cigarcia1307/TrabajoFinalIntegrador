@@ -15,6 +15,7 @@ export function PerfilPage() {
   const [email, setEmail] = useState('')
   const [mensaje, setMensaje] = useState('')
   const [error, setError] = useState('')
+  const [tokenInvitacion, setTokenInvitacion] = useState('')
   const [cargando, setCargando] = useState(false)
 
   useEffect(() => {
@@ -33,7 +34,8 @@ export function PerfilPage() {
     setCargando(true)
 
     try {
-      await crearInvitacion({ email })
+      const invitacion = await crearInvitacion({ email })
+      setTokenInvitacion(invitacion.token)
       setMensaje('Invitación creada correctamente.')
       setEmail('')
     } catch (err) {
@@ -95,6 +97,23 @@ export function PerfilPage() {
             </label>
 
             {mensaje && <p className="text-green-700">{mensaje}</p>}
+            {tokenInvitacion && (
+                <div className="rounded-xl border border-borde bg-white p-4">
+                  <p className="mb-2 text-sm font-semibold">
+                    Código de invitación
+                  </p>
+                  <p className="break-all font-mono text-sm">
+                    {tokenInvitacion}
+                  </p>
+                  <button
+                      type="button"
+                      onClick={() => navigator.clipboard.writeText(tokenInvitacion)}
+                      className="mt-3 text-sm text-tinta underline"
+                  >
+                    Copiar código
+                  </button>
+                </div>
+            )}
             {error && <p role="alert" className="text-red-600">{error}</p>}
 
             <Boton type="submit" anchoCompleto disabled={cargando}>
