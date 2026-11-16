@@ -75,6 +75,14 @@ export function RegistroPage() {
           <Boton type="submit" anchoCompleto disabled={cargando}>
             {cargando ? 'Registrando...' : 'Crear cuenta'}
           </Boton>
+
+          <button
+              type="button"
+              onClick={() => navigate('/login')}
+              className="text-center text-sm text-tinta underline hover:opacity-70"
+          >
+            Volver a iniciar sesión
+          </button>
         </form>
       </Card>
     </main>
