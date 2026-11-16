@@ -1,9 +1,14 @@
+
 spring:
   application:
     name: backend
   mongodb:
     uri: ${MONGODB_URI}
     database: gestion_cumpleanos
+  data:
+    mongodb:
+      auto-index-creation: true
+
 app:
   jwt:
     secret: ${JWT_SECRET}

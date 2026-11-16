@@ -64,6 +64,10 @@ public class SecurityConfig {
                         ).hasRole("ADMINISTRADOR")
                         .requestMatchers("/api/participantes/**")
                         .hasAnyRole("ADMINISTRADOR", "PARTICIPANTE")
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/voluntarios/*"
+                        ).hasRole("PARTICIPANTE")
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
