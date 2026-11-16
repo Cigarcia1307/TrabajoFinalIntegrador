@@ -1,15 +1,26 @@
 
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router'
 import type { Colecta, Participante } from '../../../types/api'
 import { listarColectas } from '../../../services/colectas'
 import { listarParticipantes } from '../../../services/participantes'
 
 export function ColectasPage() {
-  const [anio, setAnio] = useState(new Date().getFullYear())
+  const [anio, setAnio] = useState(() => {
+    const cicloGuardado = sessionStorage.getItem('cicloColectas')
+    const ciclo = cicloGuardado ? Number(cicloGuardado) : NaN
+
+    return Number.isInteger(ciclo) && ciclo >= 2000 && ciclo <= 2100
+        ? ciclo
+        : new Date().getFullYear()
+  })
   const [colectas, setColectas] = useState<Colecta[]>([])
   const [participantes, setParticipantes] = useState<Participante[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
+  useEffect(() => {
+    sessionStorage.setItem('cicloColectas', String(anio))
+  }, [anio])
 
   useEffect(() => {
     let vigente = true
@@ -150,9 +161,10 @@ export function ColectasPage() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 {colectas.map(colecta => (
-                    <div
+                    <Link
                         key={colecta.id}
-                        className="rounded-2xl border border-gray-200 bg-white p-5"
+                        to={`/colectas/${colecta.id}`}
+                        className="block rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-md"
                     >
                       <div className="mb-4 flex items-start justify-between gap-3">
                         <div>
@@ -166,46 +178,46 @@ export function ColectasPage() {
                         </div>
 
                         <span className="rounded-full bg-[#FEF6BB] px-3 py-1 text-xs font-medium text-tinta">
-                                        {colecta.estadoColecta.replaceAll('_', ' ')}
-                                    </span>
+                    {colecta.estadoColecta.replaceAll('_', ' ')}
+                  </span>
                       </div>
 
                       <div className="space-y-2 text-sm">
                         <p>
-                                        <span className="font-medium">
-                                            Cumpleaños:
-                                        </span>{' '}
+                    <span className="font-medium">
+                      Cumpleaños:
+                    </span>{' '}
                           {formatearFecha(colecta.fechaCumpleanos)}
                         </p>
 
                         <p>
-                                        <span className="font-medium">
-                                            Recaudador:
-                                        </span>{' '}
+                    <span className="font-medium">
+                      Recaudador:
+                    </span>{' '}
                           {obtenerNombreRecaudador(
                               colecta.recaudadorId
                           )}
                         </p>
 
                         <p>
-                                        <span className="font-medium">
-                                            Monto individual:
-                                        </span>{' '}
+                    <span className="font-medium">
+                      Monto individual:
+                    </span>{' '}
                           {formatearMonto(
                               colecta.montoIndividualPesos
                           )}
                         </p>
 
                         <p>
-                                        <span className="font-medium">
-                                            Objetivo:
-                                        </span>{' '}
+                    <span className="font-medium">
+                      Objetivo:
+                    </span>{' '}
                           {formatearMonto(
                               colecta.montoTotalObjetivo
                           )}
                         </p>
                       </div>
-                    </div>
+                    </Link>
                 ))}
               </div>
             </>

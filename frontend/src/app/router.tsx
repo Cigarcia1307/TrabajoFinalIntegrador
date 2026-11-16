@@ -12,6 +12,7 @@ import { AppLayout } from './AppLayout'
 import { ErrorPage } from './ErrorPage'
 import { GuiaDisenoPage } from './GuiaDisenoPage'
 import { RegistroPage } from '../features/auth/pages/RegistroPage'
+import { ColectaDetallePage } from '../features/colectas/pages/ColectaDetallePage'
 
 export const router = createBrowserRouter([
   {
@@ -33,6 +34,7 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <InicioPage /> },
           { path: 'colectas', element: <ColectasPage /> },
+          { path: 'colectas/:id', element: <ColectaDetallePage /> },
           { path: 'grupo', element: <GrupoPage /> },
           { path: 'perfil', element: <PerfilPage /> },
           { path: 'aportes', element: <MisAportesPage /> },
