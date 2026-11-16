@@ -1,3 +1,4 @@
+
 package com.colectaapp.backend.auth;
 
 import com.colectaapp.backend.auth.dto.AuthResponse;
@@ -101,6 +102,7 @@ public class AuthController {
                 "Bearer",
                 participante.getEmail(),
                 participante.getNombre(),
+                participante.getApellido(),
                 participante.getRol().name(),
                 participante.getId());
     }
@@ -134,6 +136,7 @@ public class AuthController {
                 "Bearer",
                 participante.getEmail(),
                 participante.getNombre(),
+                participante.getApellido(),
                 participante.getRol().name(),
                 participante.getId());
     }
@@ -155,6 +158,7 @@ public class AuthController {
                 "Bearer",
                 participante.getEmail(),
                 participante.getNombre(),
+                participante.getApellido(),
                 participante.getRol().name(),
                 participante.getId());
     }

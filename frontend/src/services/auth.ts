@@ -12,6 +12,7 @@ interface AuthResponse {
   tipo: string
   email: string
   nombre: string
+  apellido?: string
   rol: Rol
   /** Id del participante (padres). Necesario para aportes y recaudador. */
   id?: string
@@ -36,16 +37,23 @@ interface InvitacionRequest {
   email: string
 }
 
+interface InvitacionResponse {
+  token: string
+  email: string
+  fechaExpiracion: string
+  utilizada: boolean
+}
+
 export async function iniciarSesion(
-  datos: LoginRequest,
+    datos: LoginRequest,
 ): Promise<AuthResponse> {
   if (USAR_MOCKS) {
     throw new Error('Desactivá los mocks para iniciar sesión.')
   }
 
   const respuesta = await api.post<AuthResponse>(
-    '/api/auth/login',
-    datos,
+      '/api/auth/login',
+      datos,
   )
 
   if (!respuesta.token) {
@@ -57,15 +65,15 @@ export async function iniciarSesion(
 }
 
 export async function registrarse(
-  datos: RegistroRequest,
+    datos: RegistroRequest,
 ): Promise<AuthResponse> {
   if (USAR_MOCKS) {
     throw new Error('Desactivá los mocks para registrarte.')
   }
 
   const respuesta = await api.post<AuthResponse>(
-    '/api/auth/registro',
-    datos,
+      '/api/auth/registro',
+      datos,
   )
 
   if (!respuesta.token) {
@@ -76,13 +84,6 @@ export async function registrarse(
   return respuesta
 }
 
-interface InvitacionResponse {
-  token: string
-  email: string
-  fechaExpiracion: string
-  utilizada: boolean
-}
-
 export async function crearInvitacion(
     datos: InvitacionRequest,
 ): Promise<InvitacionResponse> {
@@ -90,7 +91,10 @@ export async function crearInvitacion(
     throw new Error('Las invitaciones requieren el backend real.')
   }
 
-  return api.post<InvitacionResponse>('/api/auth/invitaciones', datos)
+  return api.post<InvitacionResponse>(
+      '/api/auth/invitaciones',
+      datos,
+  )
 }
 
 export function cerrarSesion(): void {
@@ -102,10 +106,10 @@ export async function obtenerUsuarioActual(): Promise<UsuarioActual> {
     const respuesta = await api.get<AuthResponse>('/api/auth/me')
 
     return {
-      // El id real del participante: los aportes y el recaudador se comparan por id, no por email.
+      // Los aportes y el recaudador se comparan por id, no por email.
       id: respuesta.id ?? respuesta.email,
       nombre: respuesta.nombre,
-      apellido: '',
+      apellido: respuesta.apellido ?? '',
       email: respuesta.email,
       rol: respuesta.rol,
     }
