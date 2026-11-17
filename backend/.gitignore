@@ -35,3 +35,8 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# Variables de entorno y credenciales
+.env
+.env.*
+!.env.example

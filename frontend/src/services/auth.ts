@@ -14,7 +14,7 @@ interface AuthResponse {
   nombre: string
   apellido?: string
   rol: Rol
-  /** Id del participante (padres). Necesario para aportes y recaudador. */
+  /** Id del participante. Necesario para aportes y recaudador. */
   id?: string
 }
 
@@ -45,15 +45,15 @@ interface InvitacionResponse {
 }
 
 export async function iniciarSesion(
-    datos: LoginRequest,
+  datos: LoginRequest,
 ): Promise<AuthResponse> {
   if (USAR_MOCKS) {
     throw new Error('Desactivá los mocks para iniciar sesión.')
   }
 
   const respuesta = await api.post<AuthResponse>(
-      '/api/auth/login',
-      datos,
+    '/api/auth/login',
+    datos,
   )
 
   if (!respuesta.token) {
@@ -65,15 +65,15 @@ export async function iniciarSesion(
 }
 
 export async function registrarse(
-    datos: RegistroRequest,
+  datos: RegistroRequest,
 ): Promise<AuthResponse> {
   if (USAR_MOCKS) {
     throw new Error('Desactivá los mocks para registrarte.')
   }
 
   const respuesta = await api.post<AuthResponse>(
-      '/api/auth/registro',
-      datos,
+    '/api/auth/registro',
+    datos,
   )
 
   if (!respuesta.token) {
@@ -85,15 +85,15 @@ export async function registrarse(
 }
 
 export async function crearInvitacion(
-    datos: InvitacionRequest,
+  datos: InvitacionRequest,
 ): Promise<InvitacionResponse> {
   if (USAR_MOCKS) {
     throw new Error('Las invitaciones requieren el backend real.')
   }
 
   return api.post<InvitacionResponse>(
-      '/api/auth/invitaciones',
-      datos,
+    '/api/auth/invitaciones',
+    datos,
   )
 }
 
@@ -106,7 +106,6 @@ export async function obtenerUsuarioActual(): Promise<UsuarioActual> {
     const respuesta = await api.get<AuthResponse>('/api/auth/me')
 
     return {
-      // Los aportes y el recaudador se comparan por id, no por email.
       id: respuesta.id ?? respuesta.email,
       nombre: respuesta.nombre,
       apellido: respuesta.apellido ?? '',

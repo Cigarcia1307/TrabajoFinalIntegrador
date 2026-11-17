@@ -22,144 +22,141 @@ import java.util.Locale;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final ParticipanteRepository participanteRepository;
-    private final InvitacionService invitacionService;
-    private final JwtService jwtService;
-    private final PasswordEncoder passwordEncoder;
-    private final InvitacionRepository invitacionRepository;
+        private final ParticipanteRepository participanteRepository;
+        private final InvitacionService invitacionService;
+        private final JwtService jwtService;
+        private final PasswordEncoder passwordEncoder;
+        private final InvitacionRepository invitacionRepository;
 
-    public AuthController(
-            ParticipanteRepository participanteRepository,
-            InvitacionService invitacionService,
-            JwtService jwtService,
-            PasswordEncoder passwordEncoder,
-            InvitacionRepository invitacionRepository) {
+        public AuthController(
+                        ParticipanteRepository participanteRepository,
+                        InvitacionService invitacionService,
+                        JwtService jwtService,
+                        PasswordEncoder passwordEncoder,
+                        InvitacionRepository invitacionRepository) {
 
-        this.participanteRepository = participanteRepository;
-        this.invitacionService = invitacionService;
-        this.jwtService = jwtService;
-        this.passwordEncoder = passwordEncoder;
-        this.invitacionRepository = invitacionRepository;
-    }
-
-    @PostMapping("/invitaciones")
-    @ResponseStatus(HttpStatus.CREATED)
-    public Invitacion crearInvitacion(
-            @Valid @RequestBody InvitacionRequest request,
-            @AuthenticationPrincipal Jwt jwt) {
-
-        String email = request.email().trim().toLowerCase(Locale.ROOT);
-        String administrador = jwt.getSubject();
-
-        return invitacionService.crearInvitacion(email, administrador);
-    }
-
-    @PostMapping("/registro")
-    @ResponseStatus(HttpStatus.CREATED)
-    public AuthResponse registrar(
-            @Valid @RequestBody RegistroRequest request) {
-
-        String email = request.email().trim().toLowerCase(Locale.ROOT);
-
-        Invitacion invitacion =
-                invitacionService.validarInvitacion(
-                        request.tokenInvitacion());
-
-        if (invitacion.getEmail() == null
-                || !invitacion.getEmail().trim()
-                .equalsIgnoreCase(email)) {
-            throw new IllegalArgumentException(
-                    "El email no coincide con el de la invitación.");
+                this.participanteRepository = participanteRepository;
+                this.invitacionService = invitacionService;
+                this.jwtService = jwtService;
+                this.passwordEncoder = passwordEncoder;
+                this.invitacionRepository = invitacionRepository;
         }
 
-        if (participanteRepository.findByEmail(email).isPresent()) {
-            throw new IllegalArgumentException(
-                    "Ya existe una cuenta registrada con ese email.");
+        @PostMapping("/invitaciones")
+        @ResponseStatus(HttpStatus.CREATED)
+        public Invitacion crearInvitacion(
+                        @Valid @RequestBody InvitacionRequest request,
+                        @AuthenticationPrincipal Jwt jwt) {
+
+                String email = request.email().trim().toLowerCase(Locale.ROOT);
+                String administrador = jwt.getSubject();
+
+                return invitacionService.crearInvitacion(email, administrador);
         }
 
-        Participante participante = new Participante();
-        participante.setNombre(request.nombre().trim());
-        participante.setApellido(request.apellido().trim());
-        participante.setEmail(email);
-        participante.setTelefono(request.telefono());
-        participante.setCbuAlias(request.cbuAlias());
-        participante.setPassword(
-                passwordEncoder.encode(request.password()));
-        participante.setRol(Rol.PARTICIPANTE);
-        participante.setActivo(true);
+        @PostMapping("/registro")
+        @ResponseStatus(HttpStatus.CREATED)
+        public AuthResponse registrar(
+                        @Valid @RequestBody RegistroRequest request) {
 
-        participante = participanteRepository.save(participante);
+                String email = request.email().trim().toLowerCase(Locale.ROOT);
 
-        invitacion.setUtilizada(true);
-        invitacionRepository.save(invitacion);
+                Invitacion invitacion = invitacionService.validarInvitacion(
+                                request.tokenInvitacion());
 
-        String token = jwtService.generarToken(
-                participante.getEmail(),
-                participante.getRol());
+                if (invitacion.getEmail() == null
+                                || !invitacion.getEmail().trim().equalsIgnoreCase(email)) {
+                        throw new IllegalArgumentException(
+                                        "El email no coincide con el de la invitación.");
+                }
 
-        return new AuthResponse(
-                token,
-                "Bearer",
-                participante.getEmail(),
-                participante.getNombre(),
-                participante.getApellido(),
-                participante.getRol().name(),
-                participante.getId());
-    }
+                if (participanteRepository.findByEmail(email).isPresent()) {
+                        throw new IllegalArgumentException(
+                                        "Ya existe una cuenta registrada con ese email.");
+                }
 
-    @PostMapping("/login")
-    public AuthResponse login(
-            @Valid @RequestBody LoginRequest request) {
+                Participante participante = new Participante();
+                participante.setNombre(request.nombre().trim());
+                participante.setApellido(request.apellido().trim());
+                participante.setEmail(email);
+                participante.setTelefono(request.telefono());
+                participante.setCbuAlias(request.cbuAlias());
+                participante.setPassword(passwordEncoder.encode(request.password()));
+                participante.setRol(Rol.PARTICIPANTE);
+                participante.setActivo(true);
 
-        String email = request.email().trim().toLowerCase(Locale.ROOT);
+                participante = participanteRepository.save(participante);
 
-        Participante participante =
-                participanteRepository.findByEmail(email)
-                        .orElseThrow(() -> new IllegalArgumentException(
-                                "Email o contraseña incorrectos."));
+                invitacion.setUtilizada(true);
+                invitacionRepository.save(invitacion);
 
-        if (!participante.isActivo()
-                || participante.getPassword() == null
-                || !passwordEncoder.matches(
-                request.password(),
-                participante.getPassword())) {
-            throw new IllegalArgumentException(
-                    "Email o contraseña incorrectos.");
+                String token = jwtService.generarToken(
+                                participante.getEmail(),
+                                participante.getRol());
+
+                return new AuthResponse(
+                                token,
+                                "Bearer",
+                                participante.getId(),
+                                participante.getEmail(),
+                                participante.getNombre(),
+                                participante.getApellido(),
+                                participante.getRol().name(),
+                                participante.getId());
         }
 
-        String token = jwtService.generarToken(
-                participante.getEmail(),
-                participante.getRol());
+        @PostMapping("/login")
+        public AuthResponse login(
+                        @Valid @RequestBody LoginRequest request) {
 
-        return new AuthResponse(
-                token,
-                "Bearer",
-                participante.getEmail(),
-                participante.getNombre(),
-                participante.getApellido(),
-                participante.getRol().name(),
-                participante.getId());
-    }
+                String email = request.email().trim().toLowerCase(Locale.ROOT);
 
-    @GetMapping("/me")
-    public AuthResponse obtenerUsuarioActual(
-            @AuthenticationPrincipal Jwt jwt) {
+                Participante participante = participanteRepository.findByEmail(email)
+                                .orElseThrow(() -> new IllegalArgumentException(
+                                                "Email o contraseña incorrectos."));
 
-        String email = jwt.getSubject();
+                if (!participante.isActivo()
+                                || participante.getPassword() == null
+                                || !passwordEncoder.matches(
+                                                request.password(), participante.getPassword())) {
+                        throw new IllegalArgumentException(
+                                        "Email o contraseña incorrectos.");
+                }
 
-        Participante participante =
-                participanteRepository.findByEmail(email)
-                        .filter(Participante::isActivo)
-                        .orElseThrow(() -> new IllegalArgumentException(
-                                "El usuario no existe o está inactivo."));
+                String token = jwtService.generarToken(
+                                participante.getEmail(),
+                                participante.getRol());
 
-        return new AuthResponse(
-                null,
-                "Bearer",
-                participante.getEmail(),
-                participante.getNombre(),
-                participante.getApellido(),
-                participante.getRol().name(),
-                participante.getId());
-    }
+                return new AuthResponse(
+                                token,
+                                "Bearer",
+                                participante.getId(),
+                                participante.getEmail(),
+                                participante.getNombre(),
+                                participante.getApellido(),
+                                participante.getRol().name(),
+                                participante.getId());
+        }
+
+        @GetMapping("/me")
+        public AuthResponse obtenerUsuarioActual(
+                        @AuthenticationPrincipal Jwt jwt) {
+
+                String email = jwt.getSubject();
+
+                Participante participante = participanteRepository.findByEmail(email)
+                                .filter(Participante::isActivo)
+                                .orElseThrow(() -> new IllegalArgumentException(
+                                                "El usuario no existe o está inactivo."));
+
+                return new AuthResponse(
+                                null,
+                                "Bearer",
+                                participante.getId(),
+                                participante.getEmail(),
+                                participante.getNombre(),
+                                participante.getApellido(),
+                                participante.getRol().name(),
+                                participante.getId());
+        }
 }

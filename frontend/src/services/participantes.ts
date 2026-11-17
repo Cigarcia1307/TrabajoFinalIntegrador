@@ -1,4 +1,4 @@
-// Módulo 2 · Participantes (Cintia)
+
 import type { Participante } from '../types/api'
 import { USAR_MOCKS } from './config'
 import { noEncontrado } from './errores'
@@ -6,24 +6,30 @@ import { api } from './http'
 import { participantes } from './mocks/datos'
 import { responder } from './mocks/simular'
 
-/** GET /api/participantes — solo los activos (igual que el backend). */
+export type ParticipanteRequest = {
+  nombre: string
+  apellido: string
+  email: string
+  telefono?: string
+  cbuAlias?: string
+}
+
 export async function listarParticipantes(): Promise<Participante[]> {
   if (!USAR_MOCKS) return api.get('/api/participantes')
   return responder(participantes.filter((p) => p.activo))
 }
 
-/** GET /api/participantes/{id} */
 export async function obtenerParticipante(id: string): Promise<Participante> {
   if (!USAR_MOCKS) return api.get(`/api/participantes/${id}`)
+
   const p = participantes.find((x) => x.id === id)
   if (!p) throw noEncontrado('Participante')
   return responder(p)
 }
 
-
 /** POST /api/participantes — crea un participante con sus hijos. */
 export async function crearParticipante(
-    datos: Omit<Participante, 'id'>
+  datos: Omit<Participante, 'id'>
 ): Promise<Participante> {
   if (!USAR_MOCKS) {
     return api.post<Participante>('/api/participantes', datos)
@@ -39,24 +45,35 @@ export async function crearParticipante(
   return responder(nuevoParticipante)
 }
 
-
 /** PUT /api/participantes/{id} — modifica participante e hijos. */
 export async function actualizarParticipante(
-    id: string,
-    datos: Omit<Participante, 'id'>
+  id: string,
+  datos: ParticipanteRequest,
 ): Promise<Participante> {
   if (!USAR_MOCKS) {
     return api.put<Participante>(`/api/participantes/${id}`, datos)
   }
 
-  const indice = participantes.findIndex((p) => p.id === id)
-
-  if (indice === -1) {
-    throw noEncontrado('Participante')
-  }
-
-  participantes[indice] = { ...datos, id }
-
-  return responder(participantes[indice])
+  throw new Error('La edición de participantes requiere el backend real.')
 }
 
+export async function darDeBajaParticipante(
+  id: string,
+): Promise<Participante> {
+  if (!USAR_MOCKS) {
+    return api.patch(`/api/participantes/${id}/baja`)
+  }
+
+  throw new Error('La baja de participantes requiere el backend real.')
+}
+
+export async function agregarBeneficiario(
+  id: string,
+  beneficiario: { nombre: string },
+): Promise<Participante> {
+  if (!USAR_MOCKS) {
+    return api.post(`/api/participantes/${id}/beneficiarios`, beneficiario)
+  }
+
+  throw new Error('Agregar beneficiarios requiere el backend real.')
+}

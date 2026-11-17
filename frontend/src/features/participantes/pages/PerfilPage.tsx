@@ -11,12 +11,13 @@ import type { UsuarioActual } from '../../../types/api'
 
 export function PerfilPage() {
   const navigate = useNavigate()
+
   const [usuario, setUsuario] = useState<UsuarioActual | null>(null)
   const [email, setEmail] = useState('')
   const [mensaje, setMensaje] = useState('')
   const [error, setError] = useState('')
-  const [tokenInvitacion, setTokenInvitacion] = useState('')
   const [cargando, setCargando] = useState(false)
+  const [codigoInvitacion, setCodigoInvitacion] = useState('')
 
   useEffect(() => {
     obtenerUsuarioActual()
@@ -29,19 +30,36 @@ export function PerfilPage() {
 
   async function invitar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+
     setMensaje('')
     setError('')
+    setCodigoInvitacion('')
     setCargando(true)
 
     try {
       const invitacion = await crearInvitacion({ email })
-      setTokenInvitacion(invitacion.token)
+
+      setCodigoInvitacion(invitacion.token)
       setMensaje('Invitación creada correctamente.')
       setEmail('')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo crear la invitación.')
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'No se pudo crear la invitación.',
+      )
     } finally {
       setCargando(false)
+    }
+  }
+
+  async function copiarCodigo() {
+    try {
+      await navigator.clipboard.writeText(codigoInvitacion)
+      setMensaje('Código copiado correctamente.')
+      setError('')
+    } catch {
+      setError('No se pudo copiar el código. Copialo manualmente.')
     }
   }
 
@@ -61,7 +79,9 @@ export function PerfilPage() {
       <Card className="flex flex-col gap-4">
         <div>
           <p className="text-sm text-texto-suave">Nombre completo</p>
-          <p className="font-bold">{usuario.nombre} {usuario.apellido}</p>
+          <p className="font-bold">
+            {usuario.nombre} {usuario.apellido}
+          </p>
         </div>
 
         <div>
@@ -72,7 +92,9 @@ export function PerfilPage() {
         <div>
           <p className="text-sm text-texto-suave">Rol</p>
           <p className="font-semibold">
-            {usuario.rol === 'ADMINISTRADOR' ? 'Administrador' : 'Participante'}
+            {usuario.rol === 'ADMINISTRADOR'
+              ? 'Administrador'
+              : 'Participante'}
           </p>
         </div>
       </Card>
@@ -96,30 +118,46 @@ export function PerfilPage() {
               />
             </label>
 
-            {mensaje && <p className="text-green-700">{mensaje}</p>}
-            {tokenInvitacion && (
-                <div className="rounded-xl border border-borde bg-white p-4">
-                  <p className="mb-2 text-sm font-semibold">
-                    Código de invitación
-                  </p>
-                  <p className="break-all font-mono text-sm">
-                    {tokenInvitacion}
-                  </p>
-                  <button
-                      type="button"
-                      onClick={() => navigator.clipboard.writeText(tokenInvitacion)}
-                      className="mt-3 text-sm text-tinta underline"
-                  >
-                    Copiar código
-                  </button>
-                </div>
+            {mensaje && (
+              <p className="text-green-700">{mensaje}</p>
             )}
-            {error && <p role="alert" className="text-red-600">{error}</p>}
 
-            <Boton type="submit" anchoCompleto disabled={cargando}>
+            {error && (
+              <p role="alert" className="text-red-600">{error}</p>
+            )}
+
+            <Boton
+              type="submit"
+              anchoCompleto
+              disabled={cargando}
+            >
               {cargando ? 'Creando invitación...' : 'Crear invitación'}
             </Boton>
           </form>
+
+          {codigoInvitacion && (
+            <div className="flex flex-col gap-3 rounded-xl border border-borde p-4">
+              <h3 className="font-bold">Código de invitación</h3>
+
+              <p className="break-all rounded-lg bg-gray-100 p-3 text-sm">
+                {codigoInvitacion}
+              </p>
+
+              <Boton
+                type="button"
+                variante="secundario"
+                anchoCompleto
+                onClick={copiarCodigo}
+              >
+                Copiar código
+              </Boton>
+
+              <p className="text-sm text-texto-suave">
+                Compartí este código con la persona invitada.
+                Tiene una validez de 7 días.
+              </p>
+            </div>
+          )}
         </Card>
       )}
 
