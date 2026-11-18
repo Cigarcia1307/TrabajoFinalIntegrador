@@ -20,6 +20,33 @@ const DIAS_URGENTE = 7
 
 const MS_POR_DIA = 24 * 60 * 60 * 1000
 
+/** Día hábil anterior al cumpleaños. Coincide con la regla del backend. */
+export function diaHabilAnterior(fechaCumpleanos: string): Date {
+  const fecha = new Date(`${fechaCumpleanos}T12:00:00`)
+  fecha.setDate(fecha.getDate() - 1)
+  while (fecha.getDay() === 0 || fecha.getDay() === 6) {
+    fecha.setDate(fecha.getDate() - 1)
+  }
+  return fecha
+}
+
+export function diaHabilAnteriorISO(fechaCumpleanos: string): string {
+  const fecha = diaHabilAnterior(fechaCumpleanos)
+  return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`
+}
+
+/** Fecha límite sugerida para pagar: siete días después del cumpleaños. */
+export function fechaLimitePagoISO(fechaCumpleanos: string): string {
+  const fecha = new Date(`${fechaCumpleanos}T12:00:00`)
+  fecha.setDate(fecha.getDate() + DIAS_URGENTE)
+  return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`
+}
+
+/** El plazo vence al terminar su fecha límite; no impide registrar pagos después. */
+export function vencioPlazoPago(fechaCumpleanos: string, hoy: string = hoyISO()): boolean {
+  return hoy > fechaLimitePagoISO(fechaCumpleanos)
+}
+
 /** Fecha de hoy como "2026-10-11" (hora local). */
 export function hoyISO(): string {
   const d = new Date()

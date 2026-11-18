@@ -2,7 +2,12 @@ import { Gift } from 'lucide-react'
 import { AvatarCumpleanero, Boton, Card, PillEstado } from '../../../components/ui'
 import { cantidadConUnidad, formatearARS, formatearFechaCorta, formatearFechaLarga } from '../../../lib/formato'
 import { useMiAporte, type DatosMiAporte } from '../hooks/useMiAporte'
-import { necesitaRecordatorio } from '../lib/recordatorios'
+import {
+  diaHabilAnteriorISO,
+  fechaLimitePagoISO,
+  necesitaRecordatorio,
+  vencioPlazoPago,
+} from '../lib/recordatorios'
 import { AvisoPago } from './AvisoPago'
 import { BotonCopiar } from './BotonCopiar'
 
@@ -47,6 +52,16 @@ export function TarjetaMiAporte({ colectaId }: { colectaId: string }) {
         <>
           {necesitaRecordatorio(d.colecta, d.aporte) && <AvisoPago colecta={d.colecta} aporte={d.aporte} />}
           <Monto datos={d} />
+          {d.congelado &&
+            d.colecta.estadoColecta === 'en_recaudacion' &&
+            !d.aporte.pagado &&
+            d.aporte.participa !== false &&
+            vencioPlazoPago(d.colecta.fechaCumpleanos) && (
+              <p role="status" className="rounded-control bg-pendiente-bg p-3 text-caption text-pendiente">
+                El plazo sugerido venció el {formatearFechaCorta(fechaLimitePagoISO(d.colecta.fechaCumpleanos))}.
+                La colecta sigue abierta: todavía podés transferir y avisarle al recaudador para que registre el pago.
+              </p>
+            )}
           <Estados datos={d} />
           <Acciones datos={d} guardando={guardando} responder={responder} />
         </>
@@ -80,6 +95,12 @@ function Monto({ datos }: { datos: DatosMiAporte }) {
       </p>
     )
   }
+  const congeladoDesde = datos.congelado
+    ? formatearFechaCorta(diaHabilAnteriorISO(datos.colecta.fechaCumpleanos))
+    : null
+  const fechaLimite = datos.congelado
+    ? formatearFechaCorta(fechaLimitePagoISO(datos.colecta.fechaCumpleanos))
+    : null
   return (
     <div>
       <p className="text-caption text-texto-suave">Tu aporte</p>
@@ -88,6 +109,8 @@ function Monto({ datos }: { datos: DatosMiAporte }) {
         {cantidadConUnidad(datos.cantidadUnidades, indice.unidad, indice.unidadPlural)} de {indice.nombre}
         {datos.fechaEstimacion &&
           ` · estimado con el valor del ${formatearFechaCorta(datos.fechaEstimacion)}; se congela el día hábil anterior al cumple`}
+        {congeladoDesde && ` · congelado desde el ${congeladoDesde}`}
+        {fechaLimite && ` · plazo sugerido para pagar hasta el ${fechaLimite} (7 días después del cumple)`}
       </p>
     </div>
   )
@@ -127,6 +150,7 @@ function Acciones({ datos, guardando, responder }: AccionesProps) {
   if (aporte.participa === null) {
     return (
       <div className="flex flex-col gap-3">
+        {datos.congelado && <DatosTransferencia datos={datos} />}
         <p className="font-bold">¿Participás de esta colecta?</p>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Boton onClick={() => responder(true)} disabled={guardando} anchoCompleto>
@@ -150,24 +174,30 @@ function Acciones({ datos, guardando, responder }: AccionesProps) {
   }
 
   // Participa y todavía no pagó: datos para transferir
-  const { recaudador } = datos
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-3 rounded-control bg-crema p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <p className="text-caption text-texto-suave">
-            Transferile a {recaudador.nombre} {recaudador.apellido.charAt(0)}. (recaudador/a)
-          </p>
-          <p className="font-bold break-all">{recaudador.cbuAlias}</p>
-        </div>
-        <BotonCopiar texto={recaudador.cbuAlias} etiqueta="Copiar alias" />
-      </div>
+      <DatosTransferencia datos={datos} />
       <p className="text-caption text-texto-suave">
-        Cuando {recaudador.nombre} reciba tu transferencia, va a marcar tu aporte como pagado.
+        Cuando {datos.recaudador.nombre} reciba tu transferencia, va a marcar tu aporte como pagado.
       </p>
       <Boton variante="texto" onClick={() => responder(false)} disabled={guardando} className="-ml-2 self-start">
         Esta vez no participo
       </Boton>
+    </div>
+  )
+}
+
+function DatosTransferencia({ datos }: { datos: DatosMiAporte }) {
+  const { recaudador } = datos
+  return (
+    <div className="flex flex-col gap-3 rounded-control bg-crema p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <p className="text-caption text-texto-suave">
+          Transferile a {recaudador.nombre} {recaudador.apellido.charAt(0)}. (recaudador/a)
+        </p>
+        <p className="font-bold break-all">{recaudador.cbuAlias}</p>
+      </div>
+      <BotonCopiar texto={recaudador.cbuAlias} etiqueta="Copiar alias" />
     </div>
   )
 }

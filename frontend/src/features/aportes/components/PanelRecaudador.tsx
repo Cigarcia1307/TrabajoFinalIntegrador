@@ -3,7 +3,12 @@ import { AvatarCumpleanero, Boton, Card, PillEstado, type Estado } from '../../.
 import { formatearARS, formatearFechaCorta, formatearFechaLarga } from '../../../lib/formato'
 import type { Aporte } from '../../../types/api'
 import { useRecaudacion, type FilaAporte } from '../hooks/useRecaudacion'
-import { mensajeIndividual, mensajeParaGrupo } from '../lib/recordatorios'
+import {
+  fechaLimitePagoISO,
+  mensajeIndividual,
+  mensajeParaGrupo,
+  vencioPlazoPago,
+} from '../lib/recordatorios'
 import { BotonCopiar } from './BotonCopiar'
 import { ResumenRecaudacion } from './ResumenRecaudacion'
 
@@ -41,6 +46,8 @@ export function PanelRecaudador({ colectaId }: { colectaId: string }) {
   const datosMensaje = recaudador ? { colecta, recaudador, indice } : null
   const hayFaltantes = filas.some(({ aporte }) => esFaltante(aporte))
   const puedeRecordar = abierta && congelado && datosMensaje !== null && hayFaltantes
+  const fechaLimite = congelado ? fechaLimitePagoISO(colecta.fechaCumpleanos) : null
+  const plazoVencido = congelado && vencioPlazoPago(colecta.fechaCumpleanos)
 
   return (
     <Card ordenEnLaRueda={colecta.ordenEnLaRueda} elevada className="flex flex-col gap-6">
@@ -54,6 +61,23 @@ export function PanelRecaudador({ colectaId }: { colectaId: string }) {
           <h2 className="text-h3 font-extrabold">Cumple de {colecta.beneficiarioNombre}</h2>
         </div>
       </header>
+
+      {fechaLimite && (
+        <p
+          role={plazoVencido ? 'status' : undefined}
+          className={
+            plazoVencido
+              ? 'rounded-control bg-pendiente-bg p-3 text-caption text-pendiente'
+              : 'text-caption text-texto-suave'
+          }
+        >
+          Plazo sugerido para pagar: hasta el {formatearFechaCorta(fechaLimite)} (7 días después del cumpleaños).
+          {plazoVencido &&
+            (abierta
+              ? ' El plazo venció, pero la colecta sigue abierta y podés seguir registrando pagos.'
+              : ' El plazo venció y la colecta está cerrada.')}
+        </p>
+      )}
 
       <div className="grid gap-8 lg:grid-cols-2">
         <div className="flex flex-col gap-6">
