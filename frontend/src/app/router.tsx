@@ -13,6 +13,9 @@ import { ErrorPage } from './ErrorPage'
 import { GuiaDisenoPage } from './GuiaDisenoPage'
 import { RegistroPage } from '../features/auth/pages/RegistroPage'
 import { ColectaDetallePage } from '../features/colectas/pages/ColectaDetallePage'
+import { MisHijosPage } from '../features/participantes/pages/MisHijosPage'
+import { MisDatosPage } from '../features/participantes/pages/MisDatosPage'
+import { VoluntariosPage } from '../features/participantes/pages/VoluntariosPage'
 
 export const router = createBrowserRouter([
   {
@@ -37,6 +40,9 @@ export const router = createBrowserRouter([
           { path: 'colectas/:id', element: <ColectaDetallePage /> },
           { path: 'grupo', element: <GrupoPage /> },
           { path: 'perfil', element: <PerfilPage /> },
+          { path: 'mis-hijos', element: <MisHijosPage /> },
+          { path: 'mis-datos', element: <MisDatosPage /> },
+          { path: 'voluntarios', element: <VoluntariosPage /> },
           { path: 'aportes', element: <MisAportesPage /> },
           { path: 'indice', element: <IndicePage /> },
           { path: 'diseno', element: <GuiaDisenoPage /> },

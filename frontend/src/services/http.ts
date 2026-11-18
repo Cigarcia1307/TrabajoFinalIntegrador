@@ -40,7 +40,11 @@ async function pedir<T>(
     body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
   })
 
-  if (respuesta.status === 401 && ruta !== '/api/auth/login') {
+  if (
+      respuesta.status === 401 &&
+      ruta !== '/api/auth/login' &&
+      ruta !== '/api/auth/registro'
+  ) {
     guardarToken(null)
     window.location.href = '/login'
     throw new ErrorApi(401, 'Sesión expirada. Iniciá sesión nuevamente.')

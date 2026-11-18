@@ -60,3 +60,25 @@ export async function actualizarParticipante(
   return responder(participantes[indice])
 }
 
+/** POST /api/participantes/{id}/beneficiarios */
+export async function agregarBeneficiario(
+    id: string,
+    beneficiario: { nombre: string; fechaNacimiento: string }
+): Promise<Participante> {
+  if (!USAR_MOCKS) {
+    return api.post<Participante>(
+        `/api/participantes/${id}/beneficiarios`,
+        beneficiario
+    )
+  }
+
+  const participante = participantes.find((p) => p.id === id)
+
+  if (!participante) {
+    throw noEncontrado('Participante')
+  }
+
+  participante.hijos.push(beneficiario)
+
+  return responder(participante)
+}

@@ -41,50 +41,70 @@ export function RegistroPage() {
   }
 
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-6 px-5 py-8">
-      <LogoRueda />
+      <main className="flex min-h-dvh flex-col items-center justify-center gap-6 px-5 py-8">
+        <LogoRueda />
 
-      <Card className="w-full max-w-md">
-        <form onSubmit={enviar} className="flex flex-col gap-4">
-          <h1 className="text-2xl font-bold text-tinta">Crear cuenta</h1>
+        <Card className="w-full max-w-md">
+          <form onSubmit={enviar} className="flex flex-col gap-4">
+            <h1 className="text-2xl font-bold text-tinta">
+              Crear cuenta
+            </h1>
 
-          {[
-            ['tokenInvitacion', 'Código de invitación'],
-            ['nombre', 'Nombre'],
-            ['apellido', 'Apellido'],
-            ['email', 'Email'],
-            ['password', 'Contraseña'],
-            ['telefono', 'Teléfono'],
-            ['cbuAlias', 'CBU o alias'],
-          ].map(([name, label]) => (
-            <label key={name} className="flex flex-col gap-2">
-              {label}
-              <input
-                name={name}
-                type={name === 'password' ? 'password' : name === 'email' ? 'email' : 'text'}
-                required={!['telefono', 'cbuAlias'].includes(name)}
-                value={datos[name as keyof typeof datos]}
-                onChange={cambiar}
-                className="rounded-xl border border-borde p-3"
-              />
-            </label>
-          ))}
+            {[
+              ['tokenInvitacion', 'Código de invitación'],
+              ['nombre', 'Nombre'],
+              ['apellido', 'Apellido'],
+              ['email', 'Email'],
+              ['password', 'Contraseña'],
+              ['telefono', 'Teléfono'],
+              ['cbuAlias', 'CBU o alias'],
+            ].map(([name, label]) => (
+                <label key={name} className="flex flex-col gap-2">
+                  {label}
 
-          {error && <p role="alert" className="text-red-600">{error}</p>}
+                  <input
+                      name={name}
+                      type={
+                        name === 'password'
+                            ? 'password'
+                            : name === 'email'
+                                ? 'email'
+                                : 'text'
+                      }
+                      required={!['telefono', 'cbuAlias'].includes(name)}
+                      minLength={name === 'password' ? 8 : undefined}
+                      value={datos[name as keyof typeof datos]}
+                      onChange={cambiar}
+                      className="rounded-xl border border-borde p-3"
+                  />
 
-          <Boton type="submit" anchoCompleto disabled={cargando}>
-            {cargando ? 'Registrando...' : 'Crear cuenta'}
-          </Boton>
+                  {name === 'password' && (
+                      <p className="text-sm text-gray-500">
+                        La contraseña debe tener al menos 8 caracteres.
+                      </p>
+                  )}
+                </label>
+            ))}
 
-          <button
-              type="button"
-              onClick={() => navigate('/login')}
-              className="text-center text-sm text-tinta underline hover:opacity-70"
-          >
-            Volver a iniciar sesión
-          </button>
-        </form>
-      </Card>
-    </main>
+            {error && (
+                <p role="alert" className="text-red-600">
+                  {error}
+                </p>
+            )}
+
+            <Boton type="submit" anchoCompleto disabled={cargando}>
+              {cargando ? 'Registrando...' : 'Crear cuenta'}
+            </Boton>
+
+            <button
+                type="button"
+                onClick={() => navigate('/login')}
+                className="text-center text-sm text-tinta underline hover:opacity-70"
+            >
+              Volver a iniciar sesión
+            </button>
+          </form>
+        </Card>
+      </main>
   )
 }

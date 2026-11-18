@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class PostulacionVoluntarioService {
@@ -99,5 +100,15 @@ public class PostulacionVoluntarioService {
                     "Otro participante ocupó ese lugar. Volvé a intentar la postulación."
             );
         }
+    }
+
+    // Consultar si un participante ya está postulado.
+    public Optional<PostulacionVoluntario> obtenerPostulacion(
+            int anio, String participanteId) {
+
+        return postulacionRepository
+                .findByCicloLectivoAndParticipanteId(
+                        anio, participanteId
+                );
     }
 }
