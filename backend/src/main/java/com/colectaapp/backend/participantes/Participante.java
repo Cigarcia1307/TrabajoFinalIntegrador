@@ -1,3 +1,4 @@
+
 package com.colectaapp.backend.participantes;
 
 import com.colectaapp.backend.auth.Rol;
@@ -12,7 +13,6 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 @Document(collection = "padres")
 public class Participante {
 
