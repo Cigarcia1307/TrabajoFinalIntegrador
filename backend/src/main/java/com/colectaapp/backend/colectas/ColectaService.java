@@ -57,7 +57,11 @@ public class ColectaService {
         }
 
         datosColectas.sort(
-                Comparator.comparing(DatosColecta::fechaNacimiento)
+                Comparator.comparingInt(
+                        (DatosColecta dato) -> dato.fechaNacimiento().getMonthValue()
+                ).thenComparingInt(
+                        dato -> dato.fechaNacimiento().getDayOfMonth()
+                )
         );
 
         var padresBeneficiariosIds = datosColectas.stream()
@@ -72,7 +76,9 @@ public class ColectaService {
 
             colecta.setCicloLectivo(anio);
             colecta.setBeneficiarioNombre(datos.beneficiarioNombre());
-            colecta.setFechaCumpleanos(datos.fechaNacimiento());
+            colecta.setFechaCumpleanos(
+                    datos.fechaNacimiento().withYear(anio)
+            );
             colecta.setPadreId(datos.padreId());
 
             String recaudadorId =
