@@ -7,11 +7,12 @@ import { participantes } from './mocks/datos'
 import { responder } from './mocks/simular'
 
 export type ParticipanteRequest = {
-  nombre: string
-  apellido: string
-  email: string
-  telefono?: string
-  cbuAlias?: string
+    nombre: string
+    apellido: string
+    email: string
+    telefono?: string
+    cbuAlias?: string
+    hijos?: Participante['hijos']
 }
 
 export async function listarParticipantes(): Promise<Participante[]> {

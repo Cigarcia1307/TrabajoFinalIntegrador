@@ -7,6 +7,7 @@ import { obtenerUsuarioActual } from '../../../services/auth'
 import {
     obtenerParticipante,
     agregarBeneficiario,
+    actualizarParticipante,
 } from '../../../services/participantes'
 import type { Participante } from '../../../types/api'
 
@@ -18,6 +19,7 @@ export function MisHijosPage() {
     const [mensaje, setMensaje] = useState('')
     const [nombre, setNombre] = useState('')
     const [fechaNacimiento, setFechaNacimiento] = useState('')
+    const [indiceEditando, setIndiceEditando] = useState<number | null>(null)
 
     useEffect(() => {
         let activo = true
@@ -47,6 +49,17 @@ export function MisHijosPage() {
             activo = false
         }
     }, [])
+    function editarHijo(indice: number) {
+        if (!participante) return
+
+        const hijo = participante.hijos[indice]
+
+        setIndiceEditando(indice)
+        setNombre(hijo.nombre)
+        setFechaNacimiento(hijo.fechaNacimiento)
+        setError('')
+        setMensaje('')
+    }
 
     async function registrarHijo(e: FormEvent<HTMLFormElement>) {
         e.preventDefault()
@@ -58,15 +71,39 @@ export function MisHijosPage() {
         setGuardando(true)
 
         try {
-            const actualizado = await agregarBeneficiario(participante.id, {
-                nombre: nombre.trim(),
-                fechaNacimiento,
-            })
+            let actualizado: Participante
+
+            if (indiceEditando !== null) {
+                const hijosActualizados = participante.hijos.map((hijo, indice) =>
+                    indice === indiceEditando
+                        ? { ...hijo, nombre: nombre.trim(), fechaNacimiento }
+                        : hijo
+                )
+
+                actualizado = await actualizarParticipante(participante.id, {
+                    nombre: participante.nombre,
+                    apellido: participante.apellido,
+                    email: participante.email,
+                    telefono: participante.telefono,
+                    cbuAlias: participante.cbuAlias,
+                    hijos: hijosActualizados,
+                })
+            } else {
+                actualizado = await agregarBeneficiario(participante.id, {
+                    nombre: nombre.trim(),
+                    fechaNacimiento,
+                })
+            }
 
             setParticipante(actualizado)
             setNombre('')
             setFechaNacimiento('')
-            setMensaje('¡Hijo registrado correctamente!')
+            setIndiceEditando(null)
+            setMensaje(
+                indiceEditando !== null
+                    ? '¡Datos del hijo actualizados correctamente!'
+                    : '¡Hijo registrado correctamente!'
+            )
         } catch (err) {
             setError(
                 err instanceof Error
@@ -137,6 +174,13 @@ export function MisHijosPage() {
                                             ? hijo.fechaNacimiento.split('-').reverse().join('/')
                                             : 'Sin registrar'}
                                     </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => editarHijo(indice)}
+                                        className="mt-4 rounded-xl border border-[#168F87] px-4 py-2 font-semibold text-[#168F87] hover:bg-[#EAF7F5]"
+                                    >
+                                        Editar
+                                    </button>
                                 </article>
                             ))
                         ) : (
@@ -153,7 +197,7 @@ export function MisHijosPage() {
               </span>
 
                             <h2 className="text-xl font-bold text-[#293D3A]">
-                                Agregar un hijo
+                                {indiceEditando !== null ? 'Editar hijo' : 'Agregar un hijo'}
                             </h2>
                         </div>
 
@@ -189,7 +233,11 @@ export function MisHijosPage() {
                                 className="flex w-fit items-center gap-2 rounded-xl bg-[#168F87] px-5 py-3 font-semibold text-white transition-colors hover:bg-[#11766F] disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 <Plus size={18} />
-                                {guardando ? 'Guardando...' : 'Registrar hijo'}
+                                {guardando
+                                    ? 'Guardando...'
+                                    : indiceEditando !== null
+                                        ? 'Guardar cambios'
+                                        : 'Registrar hijo'}
                             </button>
                         </form>
                     </div>
