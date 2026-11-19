@@ -9,7 +9,7 @@ import {
     Users,
     X,
 } from 'lucide-react'
-import { listarCiclos } from '../../../services/colectas'
+import { listarCiclos, listarColectas } from '../../../services/colectas'
 import {
     obtenerMiPostulacion,
     postularseVoluntario,
@@ -19,6 +19,7 @@ import type { CicloLectivo } from '../../../types/api'
 
 export function VoluntariosPage() {
     const [ciclo, setCiclo] = useState<CicloLectivo | null>(null)
+    const [postulacionesCerradas, setPostulacionesCerradas] = useState(false)
     const [cargando, setCargando] = useState(true)
     const [enviando, setEnviando] = useState(false)
     const [confirmando, setConfirmando] = useState(false)
@@ -50,10 +51,14 @@ export function VoluntariosPage() {
                 setCiclo(cicloActivo)
 
                 const resultado = await obtenerMiPostulacion(cicloActivo.anio)
+                if (!activo) return
 
-                if (activo) {
-                    setPostulacion(resultado)
-                }
+                setPostulacion(resultado)
+
+                const colectasDelCiclo = await listarColectas(cicloActivo.anio)
+                if (!activo) return
+
+                setPostulacionesCerradas(colectasDelCiclo.length > 0)
             } catch (err) {
                 if (activo) {
                     setError(
@@ -86,11 +91,18 @@ export function VoluntariosPage() {
             setConfirmando(false)
         } catch (err) {
             setConfirmando(false)
-            setErrorPostulacion(
-                err instanceof Error
-                    ? err.message
-                    : 'No se pudo registrar la postulación.'
-            )
+
+            const mensaje = err instanceof Error ? err.message : ''
+
+            if (mensaje.includes('409')) {
+                setErrorPostulacion(
+                    `¡Gracias por ofrecerte como voluntario! Por el momento, las postulaciones para el ciclo lectivo ${ciclo.anio} están cerradas. ¡Agradecemos tus ganas de colaborar!`
+                )
+            } else {
+                setErrorPostulacion(
+                    mensaje || 'No se pudo registrar la postulación.'
+                )
+            }
         } finally {
             setEnviando(false)
         }
@@ -218,7 +230,15 @@ export function VoluntariosPage() {
                     </p>
                 )}
 
-                {!cargando && ciclo && !error && !postulacion && (
+                {!cargando && ciclo && !error && postulacionesCerradas && !postulacion && (
+                    <p className="mb-4 leading-relaxed text-[#485B58]">
+                        ¡Gracias por ofrecerte como voluntario! Por el momento,
+                        las postulaciones para el ciclo lectivo {ciclo.anio} están cerradas.
+                        ¡Agradecemos tus ganas de colaborar!
+                    </p>
+                )}
+
+                {!cargando && ciclo && !error && !errorPostulacion && !postulacionesCerradas && !postulacion && (
                     <>
                         <p className="mb-5 text-sm leading-relaxed text-[#6B716F]">
                             Podés ofrecerte como voluntario para este ciclo.
