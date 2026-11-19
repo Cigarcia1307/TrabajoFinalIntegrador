@@ -1,19 +1,32 @@
-// Módulo 5 · Congelamiento de Montos (Pablo)
-import type { IndiceId, PrecioReferencia } from '../types/api'
-import { USAR_MOCKS } from './config'
-import { noEncontrado } from './errores'
+
+import type { Colecta, PrecioReferencia } from '../types/api'
 import { api } from './http'
-import { preciosReferencia } from './mocks/datos'
-import { responder } from './mocks/simular'
 
-/** GET /api/precios-referencia?indice=nafta_ypf&fecha=2026-10-08 */
-export async function obtenerPrecioReferencia(indice: IndiceId, fecha: string): Promise<PrecioReferencia> {
-  if (!USAR_MOCKS) return api.get(`/api/precios-referencia?indice=${indice}&fecha=${fecha}`)
-
-  const precio = preciosReferencia.find((p) => p.indice === indice && p.fecha === fecha)
-  if (!precio) throw noEncontrado('Precio de referencia')
-  return responder(precio)
+/**
+ * GET /api/precios-referencia
+ * Devuelve todos los precios de referencia ordenados por fecha.
+ */
+export async function listarPreciosReferencia(): Promise<PrecioReferencia[]> {
+  return api.get<PrecioReferencia[]>('/api/precios-referencia')
 }
 
-/** Una colecta tiene su monto congelado cuando ya tiene un valor en pesos. */
-export const estaCongelado = (montoIndividualPesos: number) => montoIndividualPesos > 0
+/**
+ * POST /api/precios-referencia/congelar/{colectaId}
+ * Congela el monto individual de una colecta.
+ */
+export async function congelarMonto(colectaId: string): Promise<Colecta> {
+  if (!colectaId.trim()) {
+    throw new Error('El ID de la colecta es obligatorio')
+  }
+
+  return api.post<Colecta>(
+    `/api/precios-referencia/congelar/${encodeURIComponent(colectaId)}`
+  )
+}
+
+/**
+ * Una colecta tiene el monto congelado cuando
+ * ya tiene un valor positivo en pesos.
+ */
+export const estaCongelado = (montoIndividualPesos: number): boolean =>
+  montoIndividualPesos > 0

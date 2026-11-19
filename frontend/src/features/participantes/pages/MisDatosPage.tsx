@@ -105,8 +105,6 @@ export function MisDatosPage() {
                 email: participante.email,
                 telefono: telefono.trim(),
                 cbuAlias: cbuAlias.trim(),
-                activo: participante.activo,
-                hijos: participante.hijos ?? [],
             })
 
             setParticipante(actualizado)
