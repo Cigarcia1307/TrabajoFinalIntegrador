@@ -384,6 +384,26 @@ colectaapp/
 
 ---
 
+## 🧪 Datos de prueba
+
+Al iniciar el backend se cargan automáticamente, de forma idempotente, un ciclo 2026,
+seis participantes con sus niños, una votación cerrada de índice y colectas de ejemplo
+con pagos, pendientes y montos sin congelar.
+
+| Usuario | Contraseña | Rol |
+|---|---|---|
+| `juan.perez@gmail.com` | `Admin123!` | Administrador |
+| `maria.gomez@gmail.com` | `Participante123!` | Participante |
+| `carlos.fernandez@gmail.com` | `Participante123!` | Participante |
+| `laura.paz@gmail.com` | `Participante123!` | Participante |
+| `diego.rios@gmail.com` | `Participante123!` | Participante |
+| `ana.suarez@gmail.com` | `Participante123!` | Participante |
+
+Los datos demo pueden modificarse desde la aplicación. Al reiniciar el backend vuelven
+a su estado inicial.
+
+---
+
 ## 👥 Integrantes
 
 | Nombre | Usuario de GitHub |
