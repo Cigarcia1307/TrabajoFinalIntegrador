@@ -2,12 +2,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Baby, Mail, Pencil, Phone, Search, Users } from 'lucide-react'
 import { AvatarCumpleanero, Boton, Card } from '../../../components/ui'
+import { obtenerUsuarioActual } from '../../../services/auth'
 import {
   listarParticipantes,
   actualizarParticipante,
   type ParticipanteRequest,
 } from '../../../services/participantes'
-import type { Participante } from '../../../types/api'
+import type { Participante, UsuarioActual } from '../../../types/api'
 
 const formularioInicial: ParticipanteRequest = {
   nombre: '',
@@ -19,6 +20,7 @@ const formularioInicial: ParticipanteRequest = {
 
 export function GrupoPage() {
   const [participantes, setParticipantes] = useState<Participante[]>([])
+  const [usuario, setUsuario] = useState<UsuarioActual | null>(null)
   const [busqueda, setBusqueda] = useState('')
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
@@ -51,8 +53,14 @@ export function GrupoPage() {
 
     async function cargarInicial() {
       try {
-        const datos = await listarParticipantes()
-        if (activo) setParticipantes(datos)
+        const [datos, usuarioActual] = await Promise.all([
+          listarParticipantes(),
+          obtenerUsuarioActual(),
+        ])
+        if (activo) {
+          setParticipantes(datos)
+          setUsuario(usuarioActual)
+        }
       } catch (err) {
         if (activo) {
           setError(
@@ -72,6 +80,11 @@ export function GrupoPage() {
       activo = false
     }
   }, [])
+
+  function puedeEditar(participante: Participante): boolean {
+    return usuario !== null &&
+      (usuario.rol === 'ADMINISTRADOR' || usuario.id === participante.id)
+  }
 
   const participantesFiltrados = useMemo(() => {
     const termino = busqueda.trim().toLowerCase()
@@ -208,7 +221,7 @@ export function GrupoPage() {
         <div className="grid gap-4 md:grid-cols-2">
           {participantesFiltrados.map((p, index) => (
             <Card key={p.id} elevada className="flex flex-col gap-4">
-              {editando === p.id ? (
+              {editando === p.id && puedeEditar(p) ? (
                 <form onSubmit={guardarEdicion} className="flex flex-col gap-3">
                   <h2 className="text-lg font-bold text-tinta">
                     Editar participante
@@ -311,16 +324,18 @@ export function GrupoPage() {
                         </span>
                       </div>
                     </div>
-                    <Boton
-                      variante="texto"
-                      onClick={() => comenzarEdicion(p)}
-                      className="min-h-11 shrink-0"
-                      aria-label={`Editar a ${p.nombre} ${p.apellido}`}
-                      title="Editar participante"
-                    >
-                      <Pencil size={18} aria-hidden />
-                      <span className="hidden sm:inline">Editar</span>
-                    </Boton>
+                    {puedeEditar(p) && (
+                      <Boton
+                        variante="texto"
+                        onClick={() => comenzarEdicion(p)}
+                        className="min-h-11 shrink-0"
+                        aria-label={`Editar a ${p.nombre} ${p.apellido}`}
+                        title="Editar participante"
+                      >
+                        <Pencil size={18} aria-hidden />
+                        <span className="hidden sm:inline">Editar</span>
+                      </Boton>
+                    )}
                   </div>
 
                   <dl className="grid gap-2 border-t border-borde pt-4">

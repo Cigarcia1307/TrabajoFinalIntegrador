@@ -83,6 +83,14 @@ public class SecurityConfig {
                                                                 HttpMethod.POST,
                                                                 "/api/auth/invitaciones")
                                                 .hasRole("ADMINISTRADOR")
+                                                .requestMatchers(
+                                                                HttpMethod.POST,
+                                                                "/api/participantes")
+                                                .hasRole("ADMINISTRADOR")
+                                                .requestMatchers(
+                                                                HttpMethod.PATCH,
+                                                                "/api/participantes/*/baja")
+                                                .hasRole("ADMINISTRADOR")
                                                 .requestMatchers("/api/participantes/**")
                                                 .hasAnyRole("ADMINISTRADOR", "PARTICIPANTE")
                                                 .requestMatchers(
