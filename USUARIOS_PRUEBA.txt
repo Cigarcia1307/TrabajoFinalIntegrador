@@ -1,0 +1,46 @@
+COLECTAAPP - USUARIOS DE PRUEBA
+================================
+
+Estos usuarios se crean al iniciar el backend. Son solamente datos de demostracion.
+
+1. Juan Perez
+   Email: juan.perez@gmail.com
+   Contraseña: Admin123!
+   Rol: ADMINISTRADOR
+   Beneficiario: Tomas
+   Recaudador en: Colecta de Sofia
+
+2. Maria Gomez
+   Email: maria.gomez@gmail.com
+   Contraseña: Participante123!
+   Rol: PARTICIPANTE
+   Beneficiaria: Sofia
+   Recaudadora en: Colectas de Tomas y Valentina
+
+3. Carlos Fernandez
+   Email: carlos.fernandez@gmail.com
+   Contraseña: Participante123!
+   Rol: PARTICIPANTE
+   Beneficiaria: Valentina
+   Recaudador en: Colecta de Martina
+
+4. Laura Paz
+   Email: laura.paz@gmail.com
+   Contraseña: Participante123!
+   Rol: PARTICIPANTE
+   Beneficiaria: Martina
+   Recaudadora en: Colecta de Benjamin
+
+5. Diego Rios
+   Email: diego.rios@gmail.com
+   Contraseña: Participante123!
+   Rol: PARTICIPANTE
+   Beneficiario: Benjamin
+   Recaudador en: Colecta de Camila
+
+6. Ana Suarez
+   Email: ana.suarez@gmail.com
+   Contraseña: Participante123!
+   Rol: PARTICIPANTE
+   Beneficiaria: Camila
+   Recaudadora en: Ninguna

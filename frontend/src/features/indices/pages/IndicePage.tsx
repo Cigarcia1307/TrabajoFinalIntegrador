@@ -1,3 +1,4 @@
+import { Scale } from 'lucide-react'
 import { Card, PillEstado } from '../../../components/ui'
 import { AbrirVotacion } from '../components/AbrirVotacion'
 import { IndiceVigenteCard } from '../components/IndiceVigenteCard'
@@ -15,12 +16,19 @@ export function IndicePage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header>
-        <h1 className="text-h1 font-extrabold">Índice de referencia</h1>
-        <p className="max-w-prose text-texto-suave">
-          El aporte se fija en unidades y no en pesos, para que la inflación no lo achique. El grupo elige el índice y
-          la cantidad una vez por año, por votación, y rige para todos los cumples del ciclo.
-        </p>
+      <header className="rounded-panel border border-borde bg-superficie p-5 md:p-7">
+        <div className="flex items-start gap-4">
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-confeti-cielo text-tinta">
+            <Scale size={24} aria-hidden />
+          </span>
+          <div>
+            <h1 className="text-h1 font-extrabold">Índice de referencia</h1>
+            <p className="mt-2 max-w-2xl text-texto-suave">
+              El aporte se fija en unidades y no en pesos, para que la inflación no lo achique. El grupo elige el índice
+              y la cantidad una vez por año, y rige para todos los cumples del ciclo.
+            </p>
+          </div>
+        </div>
       </header>
 
       {estado.tipo === 'cargando' && <Card className="h-48 animate-pulse" aria-busy="true" />}

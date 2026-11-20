@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
+import { LogOut, Mail, ShieldCheck, UserRound } from 'lucide-react'
 import { Card, Boton } from '../../../components/ui'
 import {
   obtenerUsuarioActual,
@@ -74,39 +75,57 @@ export function PerfilPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <h1 className="text-3xl font-bold text-tinta">Mi perfil</h1>
-
-      <Card className="flex flex-col gap-4">
-        <div>
-          <p className="text-sm text-texto-suave">Nombre completo</p>
-          <p className="font-bold">
-            {usuario.nombre} {usuario.apellido}
-          </p>
+      <header className="rounded-panel border border-borde bg-superficie p-5 md:p-7">
+        <div className="flex items-center gap-4">
+          <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-confeti-coral text-tinta">
+            <UserRound size={28} aria-hidden />
+          </span>
+          <div>
+            <h1 className="text-h1 font-extrabold">Mi perfil</h1>
+            <p className="mt-1 text-texto-suave">Tus datos y opciones de cuenta.</p>
+          </div>
         </div>
+      </header>
 
-        <div>
-          <p className="text-sm text-texto-suave">Email</p>
-          <p className="font-semibold">{usuario.email}</p>
+      <Card elevada className="flex flex-col gap-5">
+        <div className="flex items-center gap-3">
+          <span className="flex size-11 items-center justify-center rounded-full bg-crema">
+            <UserRound size={20} aria-hidden />
+          </span>
+          <div>
+            <p className="text-caption text-texto-suave">Nombre completo</p>
+            <p className="text-lead font-extrabold">{usuario.nombre} {usuario.apellido}</p>
+          </div>
         </div>
-
-        <div>
-          <p className="text-sm text-texto-suave">Rol</p>
-          <p className="font-semibold">
-            {usuario.rol === 'ADMINISTRADOR'
-              ? 'Administrador'
-              : 'Participante'}
-          </p>
-        </div>
+        <dl className="grid gap-3 border-t border-borde pt-4 sm:grid-cols-2">
+          <div className="rounded-control bg-crema p-3">
+            <dt className="flex items-center gap-2 text-caption font-bold text-texto-suave">
+              <Mail size={16} aria-hidden /> Email
+            </dt>
+            <dd className="mt-1 break-all font-bold">{usuario.email}</dd>
+          </div>
+          <div className="rounded-control bg-crema p-3">
+            <dt className="flex items-center gap-2 text-caption font-bold text-texto-suave">
+              <ShieldCheck size={16} aria-hidden /> Rol
+            </dt>
+            <dd className="mt-1 font-bold">
+              {usuario.rol === 'ADMINISTRADOR' ? 'Administrador' : 'Participante'}
+            </dd>
+          </div>
+        </dl>
       </Card>
 
       {usuario.rol === 'ADMINISTRADOR' && (
-        <Card className="flex flex-col gap-4">
-          <h2 className="text-xl font-bold text-tinta">
-            Invitar participante
-          </h2>
+        <Card elevada className="flex flex-col gap-5">
+          <div>
+            <h2 className="text-h3 font-extrabold">Invitar participante</h2>
+            <p className="mt-1 text-caption text-texto-suave">
+              Generá una invitación válida por 7 días.
+            </p>
+          </div>
 
-          <form onSubmit={invitar} className="flex flex-col gap-3">
-            <label className="flex flex-col gap-2">
+          <form onSubmit={invitar} className="flex flex-col gap-4">
+            <label className="flex flex-col gap-2 font-bold">
               Email del participante
               <input
                 type="email"
@@ -114,16 +133,16 @@ export function PerfilPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="participante@email.com"
-                className="rounded-xl border border-borde p-3"
+                className="rounded-control border border-borde-control bg-superficie p-3"
               />
             </label>
 
             {mensaje && (
-              <p className="text-green-700">{mensaje}</p>
+              <p role="status" className="rounded-control bg-pagado-bg p-3 text-caption font-bold text-pagado">{mensaje}</p>
             )}
 
             {error && (
-              <p role="alert" className="text-red-600">{error}</p>
+              <p role="alert" className="rounded-control border-2 border-error p-3 text-caption text-error">{error}</p>
             )}
 
             <Boton
@@ -136,10 +155,10 @@ export function PerfilPage() {
           </form>
 
           {codigoInvitacion && (
-            <div className="flex flex-col gap-3 rounded-xl border border-borde p-4">
+            <div className="flex flex-col gap-3 rounded-control border border-borde bg-crema p-4">
               <h3 className="font-bold">Código de invitación</h3>
 
-              <p className="break-all rounded-lg bg-gray-100 p-3 text-sm">
+              <p className="break-all rounded-control bg-superficie p-3 text-caption tabular-nums">
                 {codigoInvitacion}
               </p>
 
@@ -162,6 +181,7 @@ export function PerfilPage() {
       )}
 
       <Boton variante="secundario" anchoCompleto onClick={salir}>
+        <LogOut size={18} aria-hidden />
         Cerrar sesión
       </Boton>
     </section>

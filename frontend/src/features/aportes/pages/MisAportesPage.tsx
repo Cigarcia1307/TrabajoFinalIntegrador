@@ -14,8 +14,14 @@ async function cargar(): Promise<Datos> {
   const [usuario, ciclos] = await Promise.all([obtenerUsuarioActual(), listarCiclos()])
   const activo = ciclos.find((c) => c.activo)
   if (!activo) return { enCurso: [], recaudo: [] }
-  const enCurso = (await listarColectas(activo.anio)).filter((c) => c.estadoColecta === 'en_recaudacion')
-  return { enCurso, recaudo: enCurso.filter((c) => c.recaudadorId === usuario.id) }
+  const colectas = await listarColectas(activo.anio)
+  const enCurso = colectas.filter((c) => c.estadoColecta === 'en_recaudacion')
+  return {
+    enCurso,
+    recaudo: colectas
+      .filter((c) => c.recaudadorId === usuario.id)
+      .sort((a, b) => a.ordenEnLaRueda - b.ordenEnLaRueda),
+  }
 }
 
 /**
