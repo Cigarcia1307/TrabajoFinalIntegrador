@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -19,6 +20,7 @@ public class PrecioReferencia {
     @Id
     private String id;
 
+    @Indexed(unique = true, partialFilter = "{ 'colecta_id': { '$type': 'string' } }")
     @Field("colecta_id")
     private String colectaId;
 
@@ -28,4 +30,19 @@ public class PrecioReferencia {
 
     @Field("valor_unitario_ars")
     private double valorUnitarioArs;
+
+    @Field("fecha_congelamiento_prevista")
+    private LocalDate fechaCongelamientoPrevista;
+
+    @Field("fecha_congelamiento_real")
+    private LocalDate fechaCongelamientoReal;
+
+    public PrecioReferencia(
+            String id,
+            String colectaId,
+            String indice,
+            LocalDate fecha,
+            double valorUnitarioArs) {
+        this(id, colectaId, indice, fecha, valorUnitarioArs, null, null);
+    }
 }

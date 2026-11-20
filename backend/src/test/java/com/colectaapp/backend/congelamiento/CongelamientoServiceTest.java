@@ -1,150 +1,207 @@
-
 package com.colectaapp.backend.congelamiento;
 
+import com.colectaapp.backend.colectas.CicloLectivo;
+import com.colectaapp.backend.colectas.CicloLectivoRepository;
 import com.colectaapp.backend.colectas.Colecta;
 import com.colectaapp.backend.colectas.ColectaRepository;
-import com.colectaapp.backend.colectas.CicloLectivoRepository;
 import com.colectaapp.backend.indices.Indice;
 import com.colectaapp.backend.indices.cotizaciones.Cotizacion;
 import com.colectaapp.backend.indices.cotizaciones.CotizacionService;
 import com.colectaapp.backend.indices.votacion.VotacionIndice;
 import com.colectaapp.backend.indices.votacion.VotacionIndiceRepository;
-
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 class CongelamientoServiceTest {
 
-    // PRUEBA 1: Cumpleaños lunes, congelamiento viernes
-    @Test
-    void debeCongelarElViernesSiElCumpleanosEsLunes() {
+    private ColectaRepository colectas;
+    private CicloLectivoRepository ciclos;
+    private VotacionIndiceRepository votaciones;
+    private CotizacionService cotizaciones;
+    private PrecioReferenciaRepository precios;
+    private CongelamientoService service;
 
-        CongelamientoService service =
-                new CongelamientoService(null, null, null, null, null);
+    @BeforeEach
+    void preparar() {
+        colectas = mock(ColectaRepository.class);
+        ciclos = mock(CicloLectivoRepository.class);
+        votaciones = mock(VotacionIndiceRepository.class);
+        cotizaciones = mock(CotizacionService.class);
+        precios = mock(PrecioReferenciaRepository.class);
+        service = new CongelamientoService(colectas, ciclos, votaciones, cotizaciones, precios);
 
-        LocalDate cumpleanos = LocalDate.of(2027, 3, 8);
-        LocalDate fechaEsperada = LocalDate.of(2027, 3, 5);
-
-        LocalDate resultado =
-                service.calcularDiaCongelamiento(cumpleanos);
-
-        assertEquals(fechaEsperada, resultado);
-    }
-
-    // PRUEBA 2: Cumpleaños viernes, congelamiento jueves
-    @Test
-    void debeCongelarElJuevesSiElCumpleanosEsViernes() {
-
-        CongelamientoService service =
-                new CongelamientoService(null, null, null, null, null);
-
-        LocalDate cumpleanos = LocalDate.of(2027, 3, 12);
-        LocalDate fechaEsperada = LocalDate.of(2027, 3, 11);
-
-        LocalDate resultado =
-                service.calcularDiaCongelamiento(cumpleanos);
-
-        assertEquals(fechaEsperada, resultado);
-    }
-
-    // PRUEBA 3: Calcular y guardar el monto congelado
-    @Test
-    void debeCalcularYGuardarElMontoCongelado() {
-
-        // Simulamos los repositorios y las cotizaciones
-        ColectaRepository colectas = mock(ColectaRepository.class);
-        CicloLectivoRepository ciclos = mock(CicloLectivoRepository.class);
-        VotacionIndiceRepository votaciones = mock(VotacionIndiceRepository.class);
-        CotizacionService cotizaciones = mock(CotizacionService.class);
-        PrecioReferenciaRepository precios = mock(PrecioReferenciaRepository.class);
-
-        CongelamientoService service = new CongelamientoService(
-                colectas, ciclos, votaciones, cotizaciones, precios
-        );
-
-        // Creamos una colecta ficticia
-        Colecta colecta = new Colecta();
-        colecta.setId("colecta-prueba");
-        colecta.setCicloLectivo(2027);
-
-        // Simulamos una votación cerrada
-        VotacionIndice votacion = new VotacionIndice();
-        votacion.setEstado(VotacionIndice.CERRADA);
-        votacion.setIndiceElegido("nafta_ypf");
-        votacion.setCantidadUnidades(5.0);
-
-        // Cotización ficticia: $1500 por unidad
-        Cotizacion cotizacion = new Cotizacion(
-                "nafta_ypf",
-                LocalDate.of(2027, 3, 5),
-                1500.0,
-                Cotizacion.CARGADA
-        );
-
-        // Configuramos las respuestas simuladas
-        when(colectas.findById("colecta-prueba"))
-                .thenReturn(Optional.of(colecta));
-
-        when(votaciones.findByCicloLectivo(2027))
-                .thenReturn(Optional.of(votacion));
-
-        when(cotizaciones.obtenerCotizacionActual(Indice.NAFTA_YPF))
-                .thenReturn(cotizacion);
-
+        when(precios.findByColectaId(anyString())).thenReturn(Optional.empty());
+        when(precios.save(any(PrecioReferencia.class)))
+                .thenAnswer(invocacion -> invocacion.getArgument(0));
         when(colectas.save(any(Colecta.class)))
                 .thenAnswer(invocacion -> invocacion.getArgument(0));
+    }
 
-        // Ejecutamos el congelamiento
-        Colecta resultado = service.congelar("colecta-prueba");
+    @Test
+    void debeCalcularElViernesComoDiaHabilAnteriorAlCumpleanosDelLunes() {
+        assertEquals(
+                LocalDate.of(2027, 3, 5),
+                service.calcularDiaCongelamiento(LocalDate.of(2027, 3, 8)));
+    }
 
-        // Verificamos: 5 x $1500 = $7500
+    @Test
+    void debeCalcularElViernesAnteriorSiElCumpleanosEsSabado() {
+        assertEquals(
+                LocalDate.of(2027, 3, 5),
+                service.calcularDiaCongelamiento(LocalDate.of(2027, 3, 6)));
+    }
+
+    @Test
+    void congelaConLaCotizacionHistoricaExactaEnLaFechaPrevista() {
+        LocalDate prevista = LocalDate.of(2027, 3, 5);
+        Colecta colecta = colecta("colecta-prueba", 2027, LocalDate.of(2027, 3, 8));
+        configurarVotacionCerrada(2027);
+        when(colectas.findById(colecta.getId())).thenReturn(Optional.of(colecta));
+        when(cotizaciones.obtenerCotizacionHistorica(Indice.NAFTA_YPF, prevista))
+                .thenReturn(cotizacion(prevista, 1500));
+
+        Colecta resultado = service.congelar(colecta.getId(), prevista);
+
         assertEquals(7500.0, resultado.getMontoIndividualPesos());
         assertEquals("nafta_ypf", resultado.getIndiceReferencia());
         assertEquals(5.0, resultado.getCantidadUnidades());
+        verify(cotizaciones).obtenerCotizacionHistorica(Indice.NAFTA_YPF, prevista);
+        verify(cotizaciones, never()).obtenerCotizacionActual(any());
 
-        // Verificamos que se solicite guardar la información
-        verify(precios).save(any(PrecioReferencia.class));
-        verify(colectas).save(colecta);
+        var referencia = org.mockito.ArgumentCaptor.forClass(PrecioReferencia.class);
+        verify(precios).save(referencia.capture());
+        assertEquals(prevista, referencia.getValue().getFecha());
+        assertEquals(prevista, referencia.getValue().getFechaCongelamientoPrevista());
+        assertEquals(prevista, referencia.getValue().getFechaCongelamientoReal());
     }
 
-    // PRUEBA 4: No permitir congelar dos veces
     @Test
-    void noDebeCongelarDosVecesLaMismaColecta() {
+    void recuperaUnaColectaVencidaConElValorDeLaFechaHistoricaOriginal() {
+        LocalDate prevista = LocalDate.of(2027, 3, 5);
+        LocalDate recuperada = LocalDate.of(2027, 3, 10);
+        Colecta colecta = colecta("colecta-atrasada", 2027, LocalDate.of(2027, 3, 8));
+        configurarVotacionCerrada(2027);
+        when(ciclos.findAll()).thenReturn(List.of(new CicloLectivo("ciclo-2027", 2027, true)));
+        when(colectas.findByCicloLectivo(2027)).thenReturn(List.of(colecta));
+        when(colectas.findById(colecta.getId())).thenReturn(Optional.of(colecta));
+        when(cotizaciones.obtenerCotizacionHistorica(Indice.NAFTA_YPF, prevista))
+                .thenReturn(cotizacion(prevista, 1500));
 
-        ColectaRepository colectas = mock(ColectaRepository.class);
+        service.congelarColectasPendientes(recuperada);
 
-        CongelamientoService service = new CongelamientoService(
-                colectas, null, null, null, null
-        );
+        assertEquals(7500.0, colecta.getMontoIndividualPesos());
+        verify(cotizaciones).obtenerCotizacionHistorica(Indice.NAFTA_YPF, prevista);
+        verify(cotizaciones, never()).obtenerCotizacionActual(any());
+        var referencia = org.mockito.ArgumentCaptor.forClass(PrecioReferencia.class);
+        verify(precios).save(referencia.capture());
+        assertEquals(prevista, referencia.getValue().getFecha());
+        assertEquals(prevista, referencia.getValue().getFechaCongelamientoPrevista());
+        assertEquals(recuperada, referencia.getValue().getFechaCongelamientoReal());
+    }
 
-        // Creamos una colecta que ya tiene el monto congelado
-        Colecta colecta = new Colecta();
-        colecta.setId("colecta-prueba");
-        colecta.setMontoIndividualPesos(7500.0);
-        colecta.setIndiceReferencia("nafta_ypf");
-        colecta.setCantidadUnidades(5.0);
+    @Test
+    void dejaPendienteLaColectaSiFaltaLaCotizacionHistorica() {
+        LocalDate prevista = LocalDate.of(2027, 3, 5);
+        Colecta colecta = colecta("colecta-sin-cotizacion", 2027, LocalDate.of(2027, 3, 8));
+        configurarVotacionCerrada(2027);
+        when(ciclos.findAll()).thenReturn(List.of(new CicloLectivo("ciclo-2027", 2027, true)));
+        when(colectas.findByCicloLectivo(2027)).thenReturn(List.of(colecta));
+        when(colectas.findById(colecta.getId())).thenReturn(Optional.of(colecta));
+        when(cotizaciones.obtenerCotizacionHistorica(Indice.NAFTA_YPF, prevista))
+                .thenThrow(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE));
 
-        when(colectas.findById("colecta-prueba"))
-                .thenReturn(Optional.of(colecta));
+        service.congelarColectasPendientes(LocalDate.of(2027, 3, 10));
 
-        // Verificamos que el sistema rechace el segundo congelamiento
+        assertEquals(0, colecta.getMontoIndividualPesos());
+        verify(precios, never()).save(any(PrecioReferencia.class));
+        verify(colectas, never()).save(any(Colecta.class));
+    }
+
+    @Test
+    void noCongelaMientrasLaVotacionSigaAbierta() {
+        Colecta colecta = colecta("colecta-votacion-abierta", 2027, LocalDate.of(2027, 3, 8));
+        VotacionIndice votacion = new VotacionIndice();
+        votacion.setEstado(VotacionIndice.ABIERTA);
+        when(ciclos.findAll()).thenReturn(List.of(new CicloLectivo("ciclo-2027", 2027, true)));
+        when(colectas.findByCicloLectivo(2027)).thenReturn(List.of(colecta));
+        when(colectas.findById(colecta.getId())).thenReturn(Optional.of(colecta));
+        when(votaciones.findByCicloLectivo(2027)).thenReturn(Optional.of(votacion));
+
+        service.congelarColectasPendientes(LocalDate.of(2027, 3, 10));
+
+        verify(cotizaciones, never()).obtenerCotizacionHistorica(any(), any());
+        verify(precios, never()).save(any(PrecioReferencia.class));
+    }
+
+    @Test
+    void noPermiteCongelarDosVecesLaMismaColecta() {
+        LocalDate prevista = LocalDate.of(2027, 3, 5);
+        Colecta colecta = colecta("colecta-duplicada", 2027, LocalDate.of(2027, 3, 8));
+        configurarVotacionCerrada(2027);
+        when(colectas.findById(colecta.getId())).thenReturn(Optional.of(colecta));
+        when(cotizaciones.obtenerCotizacionHistorica(Indice.NAFTA_YPF, prevista))
+                .thenReturn(cotizacion(prevista, 1500));
+
+        service.congelar(colecta.getId(), prevista);
+
         ResponseStatusException error = assertThrows(
                 ResponseStatusException.class,
-                () -> service.congelar("colecta-prueba")
-        );
+                () -> service.congelar(colecta.getId(), prevista));
 
-        // Debe responder HTTP 409 (conflicto)
-        assertEquals(409, error.getStatusCode().value());
+        assertEquals(HttpStatus.CONFLICT, error.getStatusCode());
+        verify(precios, times(1)).save(any(PrecioReferencia.class));
+    }
 
-        // No debe volver a guardar la colecta
+    @Test
+    void traduceLaCarreraEntreCongelamientoManualYAutomaticoAConflicto() {
+        LocalDate prevista = LocalDate.of(2027, 3, 5);
+        Colecta colecta = colecta("colecta-en-carrera", 2027, LocalDate.of(2027, 3, 8));
+        configurarVotacionCerrada(2027);
+        when(colectas.findById(colecta.getId())).thenReturn(Optional.of(colecta));
+        when(cotizaciones.obtenerCotizacionHistorica(Indice.NAFTA_YPF, prevista))
+                .thenReturn(cotizacion(prevista, 1500));
+        when(precios.save(any(PrecioReferencia.class)))
+                .thenThrow(new DuplicateKeyException("Unique colecta_id"));
+
+        ResponseStatusException error = assertThrows(
+                ResponseStatusException.class,
+                () -> service.congelar(colecta.getId(), prevista));
+
+        assertEquals(HttpStatus.CONFLICT, error.getStatusCode());
         verify(colectas, never()).save(any(Colecta.class));
+    }
+
+    private void configurarVotacionCerrada(int ciclo) {
+        VotacionIndice votacion = new VotacionIndice();
+        votacion.setEstado(VotacionIndice.CERRADA);
+        votacion.setIndiceElegido(Indice.NAFTA_YPF.getId());
+        votacion.setCantidadUnidades(5.0);
+        when(votaciones.findByCicloLectivo(ciclo)).thenReturn(Optional.of(votacion));
+    }
+
+    private static Colecta colecta(String id, int ciclo, LocalDate cumpleanos) {
+        Colecta colecta = new Colecta();
+        colecta.setId(id);
+        colecta.setCicloLectivo(ciclo);
+        colecta.setFechaCumpleanos(cumpleanos);
+        colecta.setActivo(true);
+        return colecta;
+    }
+
+    private static Cotizacion cotizacion(LocalDate fecha, double valor) {
+        return new Cotizacion(Indice.NAFTA_YPF.getId(), fecha, valor, Cotizacion.CARGADA);
     }
 }

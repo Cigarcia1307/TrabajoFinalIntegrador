@@ -123,20 +123,26 @@ Guarda las cotizaciones históricas de los índices utilizados para congelar los
 | Campo | Tipo | Descripción |
 |---|---|---|
 | `_id` | ObjectId | Identificador único |
+| `colecta_id` | ObjectId/String | Colecta congelada; índice único para impedir congelamientos repetidos |
 | `indice` | String | Nombre del índice (ej. `"nafta_ypf"`, `"dolar_mep"`, `"cajita_feliz"`) |
-| `fecha` | String (ISO date) | Fecha de la cotización |
+| `fecha` | String (ISO date) | Fecha informada por la cotización utilizada |
 | `valor_unitario_ars` | Number | Valor en pesos de una unidad de ese índice en esa fecha |
+| `fecha_congelamiento_prevista` | String (ISO date) | Día hábil previsto según la fecha de cumpleaños |
+| `fecha_congelamiento_real` | String (ISO date) | Día en que se ejecutó el congelamiento |
 
 **Ejemplo:**
 ```json
 {
+  "colecta_id": "colecta-2-sofia",
   "indice": "nafta_ypf",
   "fecha": "2026-06-29",
-  "valor_unitario_ars": 1250
+  "valor_unitario_ars": 1250,
+  "fecha_congelamiento_prevista": "2026-06-29",
+  "fecha_congelamiento_real": "2026-06-29"
 }
 ```
 
-En el sistema final, estos documentos se generarán automáticamente mediante un **Scheduler/Cron Job** en el backend (Spring Boot), que consulta APIs externas usando el patrón **Strategy** descripto en la propuesta (sección 1.5), en lugar de cargarse manualmente como en este prototipo de datos de ejemplo.
+Estos documentos se generan mediante un **Scheduler/Cron Job** en el backend (Spring Boot), que usa cotizaciones históricas exactas y guarda también las fechas prevista y real del congelamiento.
 
 ---
 
@@ -184,7 +190,7 @@ Registra la votación del índice de referencia y de la **cantidad de unidades**
 }
 ```
 
-> El índice único sobre `ciclo_lectivo` está declarado en el código (`@Indexed(unique = true)`), pero Spring no crea índices automáticamente por defecto: hay que crearlo en Atlas (`{ ciclo_lectivo: 1 }`, único). El backend igualmente rechaza una segunda votación para el mismo ciclo.
+> El índice único sobre `ciclo_lectivo` está declarado en el código (`@Indexed(unique = true)`). El proyecto habilita `spring.data.mongodb.auto-index-creation`; si ya existen duplicados, deben corregirse para que MongoDB pueda crear el índice.
 
 ---
 
@@ -209,6 +215,20 @@ Precios de los índices **cargados a mano por un administrador** (Módulo 4). Es
   "cargada_por": "juan.perez@gmail.com"
 }
 ```
+
+---
+
+### 2.6 `cotizacion_historica`
+
+Archivo de las cotizaciones entregadas por fuentes automáticas, conservando la fecha real del dato y su fuente. Tiene una clave única por índice y fecha. No completa fechas faltantes ni reemplaza la búsqueda histórica por la cotización actual; los datos históricos también pueden cargarse por el flujo administrativo existente.
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `_id` | ObjectId | Identificador único |
+| `indice` | String | Índice cotizado |
+| `fecha` | Date | Fecha que informó la fuente |
+| `valor_unitario_ars` | Number | Valor unitario real obtenido |
+| `fuente` | String | `"automatica"` o `"cargada"` |
 
 ---
 

@@ -5,10 +5,9 @@ import com.colectaapp.backend.indices.Indice;
 /**
  * Patrón Strategy (Módulo 4): cada índice sabe cómo conseguir su cotización.
  *
- * El resto del sistema (por ejemplo, el congelamiento del Módulo 5) solo pide
- * "dame el valor de hoy" a través de CotizacionService, sin saber si viene de
- * una API, de datos abiertos o de un precio cargado a mano. Cambiar la fuente
- * de un índice es cambiar SU strategy, sin tocar nada más.
+ * Cada strategy entrega la cotización más reciente disponible. CotizacionService
+ * archiva ese valor con la fecha informada por la fuente y resuelve las consultas
+ * históricas exactas sin sustituir fechas faltantes.
  */
 public interface CotizacionStrategy {
 

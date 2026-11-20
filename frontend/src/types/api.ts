@@ -165,8 +165,12 @@ export interface CargaCotizacion {
 export interface PrecioReferencia {
   id: string
   indice: IndiceId
+  /** Fecha real de la cotización histórica utilizada. */
   fecha: string
   valorUnitarioArs: number
+  /** Fechas ausentes en registros históricos anteriores a este cambio. */
+  fechaCongelamientoPrevista?: string | null
+  fechaCongelamientoReal?: string | null
 }
 
 // ── Módulo 6 · Aportes y Pagos ──────────────────────────────────────────────

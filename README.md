@@ -207,7 +207,9 @@ Resuelve la cotización de cada índice sin acoplar el servicio de colectas a un
 | Nafta súper YPF | **Automática:** datos abiertos oficiales "Precios vigentes en surtidor" (Resolución 314/2016, Secretaría de Energía). Descarga el CSV (`app.cotizaciones.nafta-csv-url`, ya configurado por defecto), filtra YPF + nafta súper + horario diurno + provincia (`app.cotizaciones.nafta-provincia`), descarta las estaciones que no actualizan su precio (más de 30 días antes del dato más reciente) y toma la mediana. Guarda el resultado 6 horas. El dato es tan reciente como lo publique Energía: la fecha que se muestra es la del precio más nuevo del archivo. | `NaftaYpfStrategy` |
 | Cajita Feliz | **Manual:** no hay fuente pública; un administrador carga el precio en la pantalla de Índice | `CajitaFelizStrategy` |
 
-Si una fuente automática falla (o la URL no está configurada), su Strategy usa el último precio cargado por un administrador (colección `cotizacion_cargada`). Agregar o cambiar la fuente de un índice es cambiar solo su Strategy: el resto del sistema (incluido el congelamiento del Módulo 5) usa `CotizacionService` sin saber de dónde sale el valor.
+Si una fuente automática falla (o la URL no está configurada), su Strategy usa el último precio cargado por un administrador (colección `cotizacion_cargada`). Agregar o cambiar la fuente de un índice es cambiar solo su Strategy: el resto del sistema usa `CotizacionService` sin saber de dónde sale el valor.
+
+Las fuentes automáticas configuradas exponen cotizaciones actuales, no una consulta histórica por fecha. Por eso el backend archiva diariamente el valor que efectivamente devuelve cada fuente, conservando la fecha informada por ella (`cotizacion_historica`); no le asigna una fecha distinta. Si falta la fecha prevista, un administrador puede cargar el dato histórico real con esa fecha. Sin un valor exacto archivado o cargado, el congelamiento queda pendiente y no usa una cotización actual como reemplazo.
 ```
 GET    /api/indices                            # catálogo de índices (nombre y unidad)
 GET    /api/indices/vigente                    # índice y cantidad elegidos para el ciclo actual (404 si todavía no se votó)
@@ -219,11 +221,11 @@ GET    /api/indices/{indice}/cotizacion-actual # valor de hoy de 1 unidad, segú
 POST   /api/indices/{indice}/cotizaciones      # solo ADMINISTRADOR: carga un precio a mano (fuente de la Cajita Feliz y respaldo de los automáticos)
 ```
 
-> Para el Módulo 5: `VotacionIndiceService.resultadoDelCiclo(ciclo)` devuelve el índice y la cantidad elegidos para un ciclo, y `CotizacionService.obtenerCotizacionActual(indice)` el valor del día. Con eso se calcula `monto_individual_pesos = cantidad_unidades × valor_unitario_ars`.
+> Para el Módulo 5: la votación cerrada devuelve el índice y la cantidad elegidos para un ciclo; `CotizacionService.obtenerCotizacionHistorica(indice, fechaPrevista)` exige el dato exacto para calcular `monto_individual_pesos = cantidad_unidades × valor_unitario_ars`.
 
 ### Módulo 5 · Congelamiento de Montos
-Scheduler/Cron Job que fija el valor en pesos el día hábil previo a cada colecta, persistiéndolo en `precio_referencia` y en `monto_individual_pesos`. En ese mismo momento copia a la colecta el `indice_referencia` y la `cantidad_unidades` de la votación del ciclo (Módulo 4): `monto_individual_pesos = cantidad_unidades × valor_unitario_ars`.
-**Clases:** `CongelamientoScheduler`, `PrecioReferencia`, `CongelamientoService`.
+El scheduler archiva la cotización disponible cada día y procesa colectas pendientes cuya fecha prevista ya llegó, incluso si quedó atrás. Para congelar exige una cotización archivada o cargada manualmente con fecha exactamente igual al día hábil previsto; guarda fecha prevista, fecha real de ejecución y fecha/valor de la cotización en `precio_referencia`. En ese mismo momento copia a la colecta el `indice_referencia` y la `cantidad_unidades` de la votación cerrada del ciclo (Módulo 4): `monto_individual_pesos = cantidad_unidades × valor_unitario_ars`. El calendario vigente considera días laborables de lunes a viernes; no hay una fuente/calendario de feriados configurada.
+**Clases:** `CongelamientoScheduler`, `PrecioReferencia`, `CongelamientoService`, `CotizacionHistorica`.
 ```
 GET    /api/precios-referencia?indice=nafta_ypf&fecha=2026-06-29
 POST   /api/precios-referencia/congelar/{colectaId}
