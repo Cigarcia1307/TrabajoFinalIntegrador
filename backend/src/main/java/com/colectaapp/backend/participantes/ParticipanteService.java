@@ -1,6 +1,9 @@
 package com.colectaapp.backend.participantes;
 
+import com.colectaapp.backend.auth.Rol;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -28,7 +31,8 @@ public class ParticipanteService {
                 .orElseThrow(() -> new RuntimeException("Participante no encontrado"));
     }
 
-    public Participante actualizar(String id, Participante datos) {
+    public Participante actualizar(String id, Participante datos, String emailUsuario) {
+        exigirPropietarioOAdministrador(id, emailUsuario);
         Participante participante = buscarPorId(id);
 
         participante.setNombre(datos.getNombre());
@@ -53,9 +57,26 @@ public class ParticipanteService {
         return repository.save(participante);
     }
 
-    public Participante agregarBeneficiario(String id, Beneficiario beneficiario) {
+    public Participante agregarBeneficiario(
+            String id,
+            Beneficiario beneficiario,
+            String emailUsuario) {
+        exigirPropietarioOAdministrador(id, emailUsuario);
         Participante participante = buscarPorId(id);
         participante.getHijos().add(beneficiario);
         return repository.save(participante);
+    }
+
+    private void exigirPropietarioOAdministrador(String id, String emailUsuario) {
+        Participante usuario = repository.findByEmail(emailUsuario)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Usuario no encontrado"));
+
+        if (usuario.getRol() != Rol.ADMINISTRADOR && !usuario.getId().equals(id)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Solo podés modificar tu propia información");
+        }
     }
 }

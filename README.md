@@ -171,14 +171,15 @@ GET    /api/auth/me
 ```
 
 ### Módulo 2 · Participantes
-Administra padres e hijos (beneficiarios) embebidos. Baja lógica vía `activo`.
+Administra padres e hijos (beneficiarios) embebidos. Cada participante puede editar su propio perfil y beneficiarios; solo un administrador puede editar a otros, crear participantes o darles de baja. Baja lógica vía `activo`.
 **Clases:** `Participante`, `Beneficiario`, `ParticipanteController`, `ParticipanteService`, `ParticipanteRepository`.
 ```
+POST   /api/participantes (solo administrador)
 GET    /api/participantes
 GET    /api/participantes/{id}
-PUT    /api/participantes/{id}
-PATCH  /api/participantes/{id}/baja
-POST   /api/participantes/{id}/beneficiarios
+PUT    /api/participantes/{id} (propio o administrador)
+PATCH  /api/participantes/{id}/baja (solo administrador)
+POST   /api/participantes/{id}/beneficiarios (propio o administrador)
 PUT    /api/participantes/{id}/beneficiarios/{beneficiarioId}
 ```
 

@@ -1,6 +1,8 @@
 package com.colectaapp.backend.participantes;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,8 +36,9 @@ public class ParticipanteController {
     @PutMapping("/{id}")
     public Participante actualizar(
             @PathVariable String id,
-            @RequestBody Participante participante) {
-        return service.actualizar(id, participante);
+            @RequestBody Participante participante,
+            @AuthenticationPrincipal Jwt jwt) {
+        return service.actualizar(id, participante, jwt.getSubject());
     }
 
     @PatchMapping("/{id}/baja")
@@ -47,7 +50,8 @@ public class ParticipanteController {
     @ResponseStatus(HttpStatus.CREATED)
     public Participante agregarBeneficiario(
             @PathVariable String id,
-            @RequestBody Beneficiario beneficiario) {
-        return service.agregarBeneficiario(id, beneficiario);
+            @RequestBody Beneficiario beneficiario,
+            @AuthenticationPrincipal Jwt jwt) {
+        return service.agregarBeneficiario(id, beneficiario, jwt.getSubject());
     }
 }
