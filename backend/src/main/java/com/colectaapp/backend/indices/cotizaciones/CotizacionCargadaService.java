@@ -28,6 +28,16 @@ public class CotizacionCargadaService {
                         Cotizacion.CARGADA));
     }
 
+    /** Cotización cargada exactamente para la fecha solicitada. */
+    public Optional<Cotizacion> enFecha(Indice indice, LocalDate fecha) {
+        return repository.findFirstByIndiceAndFecha(indice.getId(), fecha)
+                .map(c -> new Cotizacion(
+                        c.getIndice(),
+                        c.getFecha(),
+                        c.getValorUnitarioArs(),
+                        Cotizacion.CARGADA));
+    }
+
     /** Último precio cargado, o 503 si nunca se cargó ninguno. */
     public Cotizacion ultimaObligatoria(Indice indice) {
         return ultima(indice).orElseThrow(() -> new ResponseStatusException(
