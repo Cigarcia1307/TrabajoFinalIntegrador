@@ -1,4 +1,5 @@
 import { Card } from '../../../components/ui'
+import { Scale, Snowflake } from 'lucide-react'
 import { cantidadConUnidad, formatearARS, formatearFechaCorta } from '../../../lib/formato'
 import type { IndiceVigente } from '../../../types/api'
 import type { DatosIndices } from '../hooks/useIndices'
@@ -12,14 +13,21 @@ export function IndiceVigenteCard({ datos, vigente }: { datos: DatosIndices; vig
 
   return (
     <Card elevada className="flex flex-col gap-4">
-      <p className="text-caption text-texto-suave">
-        Aporte por cumple · elegido por votación el {formatearFechaCorta(vigente.vigenteDesde)} · rige todo el año
-      </p>
-      <div>
-        <p className="text-monto font-extrabold">
-          {cantidadConUnidad(vigente.cantidadUnidades, indice.unidad, indice.unidadPlural)}
-        </p>
-        <p className="text-lead font-semibold">de {indice.nombre}</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-caption font-bold text-texto-suave">
+            Aporte vigente elegido el {formatearFechaCorta(vigente.vigenteDesde)}
+          </p>
+          <p className="mt-2 text-monto font-extrabold tabular-nums">
+            {cantidadConUnidad(vigente.cantidadUnidades, indice.unidad, indice.unidadPlural)}
+          </p>
+          <p className="mt-1 flex items-center gap-2 text-lead font-semibold">
+            <Scale size={18} aria-hidden /> de {indice.nombre}
+          </p>
+        </div>
+        <span className="hidden size-12 items-center justify-center rounded-full bg-congelado-bg text-congelado sm:flex">
+          <Snowflake size={22} aria-hidden />
+        </span>
       </div>
       {cotizacion && (
         <p className="rounded-control bg-crema p-3 text-caption">
