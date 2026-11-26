@@ -43,7 +43,7 @@ El caso de uso inicial del proyecto es un grupo de padres de un colegio, donde s
 
 * **Gestión de participantes:** los padres pertenecen al grupo de forma permanente mientras continúen formando parte del mismo. Pueden participar o no participar individualmente en cada colecta.
 * **Invitación y registro de usuarios:** el administrador incorpora a los padres al grupo mediante una invitación. El participante completa sus datos y establece su contraseña para crear su cuenta.
-* **Gestión de cumpleaños:** el administrador carga manualmente el calendario de cumpleaños de los alumnos.
+* **Gestión de cumpleaños:** el administrador carga manualmente el calendario de cumpleaños de los alumnos. Un padre puede solicitar corregir la fecha de su hijo, pero el cambio solo se hace efectivo cuando lo aprueba un administrador.
 * **Generación automática de colectas:** a partir del calendario de cumpleaños, el sistema genera automáticamente una colecta para cada cumpleaños, evitando que el administrador tenga que crear cada colecta manualmente.
 * **Aportes indexados mediante unidades de referencia:** el grupo puede establecer una unidad de referencia para determinar el importe a aportar (ej.: 5 litros de nafta súper por participante).
 * **Congelamiento de Valor Automático:** el sistema ejecuta un proceso programado que fija el valor exacto en pesos argentinos (ARS) el día hábil anterior a la colecta.
@@ -171,7 +171,7 @@ GET    /api/auth/me
 ```
 
 ### Módulo 2 · Participantes
-Administra padres e hijos (beneficiarios) embebidos. Cada participante puede editar su propio perfil y beneficiarios; solo un administrador puede editar a otros, crear participantes o darles de baja. Baja lógica vía `activo`.
+Administra padres e hijos (beneficiarios) embebidos. Cada participante puede editar su propio perfil y agregar beneficiarios; los cambios de fecha de nacimiento solicitados por un padre quedan pendientes hasta que un administrador los apruebe o rechace. Solo un administrador puede modificar directamente beneficiarios de otros participantes, crear participantes o darles de baja. Baja lógica vía `activo`.
 **Clases:** `Participante`, `Beneficiario`, `ParticipanteController`, `ParticipanteService`, `ParticipanteRepository`.
 ```
 POST   /api/participantes (solo administrador)
@@ -180,8 +180,11 @@ GET    /api/participantes/{id}
 PUT    /api/participantes/{id} (propio o administrador)
 PATCH  /api/participantes/{id}/baja (solo administrador)
 POST   /api/participantes/{id}/beneficiarios (propio o administrador)
-PUT    /api/participantes/{id}/beneficiarios/{beneficiarioId}
+PATCH  /api/participantes/{id}/beneficiarios/{indice}/solicitud-fecha (propio o administrador)
+PATCH  /api/participantes/{id}/beneficiarios/{indice}/aprobar-fecha (solo administrador)
+PATCH  /api/participantes/{id}/beneficiarios/{indice}/rechazar-fecha (solo administrador)
 ```
+La fecha solicitada se guarda en `fecha_nacimiento_solicitada`; no reemplaza la fecha vigente hasta la aprobación. Al aprobar, si la colecta del ciclo activo sigue abierta y no tiene aportes pagados, se actualiza su fecha y se invalida cualquier congelamiento previo para que el scheduler vuelva a congelar en la fecha prevista. Si ya hay al menos un aporte pagado, se conserva sin cambios la fecha y el monto congelado de esa colecta; el nuevo cumpleaños queda vigente para los ciclos siguientes. Los pagos se entienden como pagos registrados en la aplicación por el recaudador.
 
 ### Módulo 3 · Colectas
 Crea y da seguimiento a cada colecta dentro de la rueda circular anual, incluyendo la asignación del recaudador (ver decisión cerrada más abajo).

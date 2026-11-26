@@ -54,4 +54,33 @@ public class ParticipanteController {
             @AuthenticationPrincipal Jwt jwt) {
         return service.agregarBeneficiario(id, beneficiario, jwt.getSubject());
     }
+
+    @PatchMapping("/{id}/beneficiarios/{indice}/solicitud-fecha")
+    public Participante solicitarCambioFecha(
+            @PathVariable String id,
+            @PathVariable int indice,
+            @RequestBody SolicitudCambioFecha solicitud,
+            @AuthenticationPrincipal Jwt jwt) {
+        return service.solicitarCambioFecha(
+                id, indice, solicitud.fechaNacimiento(), jwt.getSubject());
+    }
+
+    @PatchMapping("/{id}/beneficiarios/{indice}/aprobar-fecha")
+    public Participante aprobarCambioFecha(
+            @PathVariable String id,
+            @PathVariable int indice,
+            @AuthenticationPrincipal Jwt jwt) {
+        return service.aprobarCambioFecha(id, indice, jwt.getSubject());
+    }
+
+    @PatchMapping("/{id}/beneficiarios/{indice}/rechazar-fecha")
+    public Participante rechazarCambioFecha(
+            @PathVariable String id,
+            @PathVariable int indice,
+            @AuthenticationPrincipal Jwt jwt) {
+        return service.rechazarCambioFecha(id, indice, jwt.getSubject());
+    }
+
+    public record SolicitudCambioFecha(java.time.LocalDate fechaNacimiento) {
+    }
 }

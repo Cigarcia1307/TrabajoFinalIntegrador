@@ -29,6 +29,7 @@ export interface Beneficiario {
   // Pendiente en el backend: hoy Beneficiario no tiene id. Ver lib/beneficiario.ts
   nombre: string
   fechaNacimiento: string
+  fechaNacimientoSolicitada?: string | null
 }
 
 /** Participante.java — colección `padres` */

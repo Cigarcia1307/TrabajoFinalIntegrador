@@ -7,7 +7,7 @@ import { obtenerUsuarioActual } from '../../../services/auth'
 import {
     obtenerParticipante,
     agregarBeneficiario,
-    actualizarParticipante,
+    solicitarCambioFechaBeneficiario,
 } from '../../../services/participantes'
 import type { Participante } from '../../../types/api'
 
@@ -56,7 +56,7 @@ export function MisHijosPage() {
 
         setIndiceEditando(indice)
         setNombre(hijo.nombre)
-        setFechaNacimiento(hijo.fechaNacimiento)
+        setFechaNacimiento(hijo.fechaNacimientoSolicitada ?? hijo.fechaNacimiento)
         setError('')
         setMensaje('')
     }
@@ -74,36 +74,32 @@ export function MisHijosPage() {
             let actualizado: Participante
 
             if (indiceEditando !== null) {
-                const hijosActualizados = participante.hijos.map((hijo, indice) =>
-                    indice === indiceEditando
-                        ? { ...hijo, nombre: nombre.trim(), fechaNacimiento }
-                        : hijo
+                const hijo = participante.hijos[indiceEditando]
+                actualizado = await solicitarCambioFechaBeneficiario(
+                    participante.id,
+                    indiceEditando,
+                    fechaNacimiento
                 )
-
-                actualizado = await actualizarParticipante(participante.id, {
-                    nombre: participante.nombre,
-                    apellido: participante.apellido,
-                    email: participante.email,
-                    telefono: participante.telefono,
-                    cbuAlias: participante.cbuAlias,
-                    hijos: hijosActualizados,
-                })
+                setMensaje(
+                    fechaNacimiento === hijo.fechaNacimiento &&
+                        hijo.fechaNacimientoSolicitada
+                        ? 'La solicitud de cambio fue cancelada.'
+                        : fechaNacimiento === hijo.fechaNacimiento
+                            ? 'La fecha no tuvo cambios.'
+                            : 'Solicitud enviada. Un administrador debe aprobar la nueva fecha.'
+                )
             } else {
                 actualizado = await agregarBeneficiario(participante.id, {
                     nombre: nombre.trim(),
                     fechaNacimiento,
                 })
+                setMensaje('¡Hijo registrado correctamente!')
             }
 
             setParticipante(actualizado)
             setNombre('')
             setFechaNacimiento('')
             setIndiceEditando(null)
-            setMensaje(
-                indiceEditando !== null
-                    ? '¡Datos del hijo actualizados correctamente!'
-                    : '¡Hijo registrado correctamente!'
-            )
         } catch (err) {
             setError(
                 err instanceof Error
@@ -174,6 +170,13 @@ export function MisHijosPage() {
                                             ? hijo.fechaNacimiento.split('-').reverse().join('/')
                                             : 'Sin registrar'}
                                     </p>
+                                    {hijo.fechaNacimientoSolicitada && (
+                                        <p className="mt-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+                                            Cambio solicitado:{' '}
+                                            {hijo.fechaNacimientoSolicitada.split('-').reverse().join('/')}
+                                            {' · Pendiente de aprobación'}
+                                        </p>
+                                    )}
                                     <button
                                         type="button"
                                         onClick={() => editarHijo(indice)}
@@ -197,23 +200,29 @@ export function MisHijosPage() {
               </span>
 
                             <h2 className="text-xl font-bold text-[#293D3A]">
-                                {indiceEditando !== null ? 'Editar hijo' : 'Agregar un hijo'}
+                                {indiceEditando !== null ? 'Solicitar cambio de cumpleaños' : 'Agregar un hijo'}
                             </h2>
                         </div>
 
                         <form onSubmit={registrarHijo} className="flex flex-col gap-4">
-                            <label className="flex flex-col gap-2 font-medium text-[#293D3A]">
-                                Nombre del hijo
-                                <input
-                                    type="text"
-                                    required
-                                    maxLength={100}
-                                    value={nombre}
-                                    onChange={(e) => setNombre(e.target.value)}
-                                    placeholder="Ej.: Martina"
-                                    className="rounded-xl border border-[#DADFD9] p-3 outline-none focus:border-[#168F87]"
-                                />
-                            </label>
+                            {indiceEditando === null ? (
+                                <label className="flex flex-col gap-2 font-medium text-[#293D3A]">
+                                    Nombre del hijo
+                                    <input
+                                        type="text"
+                                        required
+                                        maxLength={100}
+                                        value={nombre}
+                                        onChange={(e) => setNombre(e.target.value)}
+                                        placeholder="Ej.: Martina"
+                                        className="rounded-xl border border-[#DADFD9] p-3 outline-none focus:border-[#168F87]"
+                                    />
+                                </label>
+                                ) : (
+                                    <p className="font-semibold text-[#293D3A]">
+                                        {participante.hijos[indiceEditando]?.nombre}
+                                    </p>
+                                )}
 
                             <label className="flex flex-col gap-2 font-medium text-[#293D3A]">
                                 Fecha de nacimiento
@@ -229,14 +238,18 @@ export function MisHijosPage() {
 
                             <button
                                 type="submit"
-                                disabled={guardando || !nombre.trim() || !fechaNacimiento}
+                                disabled={
+                                    guardando ||
+                                    (indiceEditando === null && !nombre.trim()) ||
+                                    !fechaNacimiento
+                                }
                                 className="flex w-fit items-center gap-2 rounded-xl bg-[#168F87] px-5 py-3 font-semibold text-white transition-colors hover:bg-[#11766F] disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 <Plus size={18} />
                                 {guardando
                                     ? 'Guardando...'
                                     : indiceEditando !== null
-                                        ? 'Guardar cambios'
+                                        ? 'Enviar solicitud'
                                         : 'Registrar hijo'}
                             </button>
                         </form>

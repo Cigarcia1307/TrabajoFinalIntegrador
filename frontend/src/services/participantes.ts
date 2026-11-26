@@ -91,3 +91,61 @@ export async function agregarBeneficiario(
 
   return responder(participante)
 }
+
+export async function solicitarCambioFechaBeneficiario(
+    id: string,
+    indice: number,
+    fechaNacimiento: string
+): Promise<Participante> {
+  if (!USAR_MOCKS) {
+    return api.patch<Participante>(
+        `/api/participantes/${id}/beneficiarios/${indice}/solicitud-fecha`,
+        { fechaNacimiento }
+    )
+  }
+
+  const participante = participantes.find((p) => p.id === id)
+  const beneficiario = participante?.hijos[indice]
+  if (!participante || !beneficiario) throw noEncontrado('Beneficiario')
+  beneficiario.fechaNacimientoSolicitada =
+      beneficiario.fechaNacimiento === fechaNacimiento ? null : fechaNacimiento
+  return responder(participante)
+}
+
+export async function aprobarCambioFechaBeneficiario(
+    id: string,
+    indice: number
+): Promise<Participante> {
+  if (!USAR_MOCKS) {
+    return api.patch<Participante>(
+        `/api/participantes/${id}/beneficiarios/${indice}/aprobar-fecha`
+    )
+  }
+
+  const participante = participantes.find((p) => p.id === id)
+  const beneficiario = participante?.hijos[indice]
+  if (!participante || !beneficiario) throw noEncontrado('Beneficiario')
+  if (!beneficiario.fechaNacimientoSolicitada) {
+    throw new Error('No hay un cambio de fecha pendiente.')
+  }
+  beneficiario.fechaNacimiento = beneficiario.fechaNacimientoSolicitada
+  beneficiario.fechaNacimientoSolicitada = null
+  return responder(participante)
+}
+
+export async function rechazarCambioFechaBeneficiario(
+    id: string,
+    indice: number
+): Promise<Participante> {
+  if (!USAR_MOCKS) {
+    return api.patch<Participante>(
+        `/api/participantes/${id}/beneficiarios/${indice}/rechazar-fecha`
+    )
+  }
+
+  const participante = participantes.find((p) => p.id === id)
+  const beneficiario = participante?.hijos[indice]
+  if (!participante || !beneficiario) throw noEncontrado('Beneficiario')
+  beneficiario.fechaNacimientoSolicitada = null
+  return responder(participante)
+}

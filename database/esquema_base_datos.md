@@ -35,6 +35,7 @@ Cada objeto dentro de `hijos`:
 |---|---|---|
 | `nombre` | String | Nombre del hijo/a (beneficiario) |
 | `fecha_nacimiento` | String (ISO date) | Determina el orden de la rueda anual |
+| `fecha_nacimiento_solicitada` | String (ISO date), opcional | Nueva fecha solicitada por el padre; solo un administrador puede aprobarla para reemplazar `fecha_nacimiento` |
 
 **Ejemplo:**
 ```json

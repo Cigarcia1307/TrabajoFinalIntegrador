@@ -17,4 +17,11 @@ public class Beneficiario {
     @Field("fecha_nacimiento")
     private LocalDate fechaNacimiento;
 
+    @Field("fecha_nacimiento_solicitada")
+    private LocalDate fechaNacimientoSolicitada;
+
+    public Beneficiario(String nombre, LocalDate fechaNacimiento) {
+        this(nombre, fechaNacimiento, null);
+    }
+
 }

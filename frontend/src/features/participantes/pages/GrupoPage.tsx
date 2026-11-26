@@ -6,6 +6,8 @@ import { obtenerUsuarioActual } from '../../../services/auth'
 import {
   listarParticipantes,
   actualizarParticipante,
+  aprobarCambioFechaBeneficiario,
+  rechazarCambioFechaBeneficiario,
   type ParticipanteRequest,
 } from '../../../services/participantes'
 import type { Participante, UsuarioActual } from '../../../types/api'
@@ -136,6 +138,33 @@ export function GrupoPage() {
         err instanceof Error
           ? err.message
           : 'No se pudo actualizar el participante.',
+      )
+    } finally {
+      setGuardando(false)
+    }
+  }
+
+  async function resolverSolicitud(
+    participanteId: string,
+    indice: number,
+    aprobar: boolean,
+  ) {
+    setGuardando(true)
+    setError('')
+    setMensaje('')
+    try {
+      if (aprobar) {
+        await aprobarCambioFechaBeneficiario(participanteId, indice)
+      } else {
+        await rechazarCambioFechaBeneficiario(participanteId, indice)
+      }
+      setMensaje(aprobar ? 'Cambio de cumpleaños aprobado.' : 'Solicitud rechazada.')
+      await cargarParticipantes()
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'No se pudo resolver la solicitud.',
       )
     } finally {
       setGuardando(false)
@@ -361,6 +390,34 @@ export function GrupoPage() {
                         <p className="text-caption text-texto-suave">
                           {p.hijos.map((hijo) => hijo.nombre).join(' · ')}
                         </p>
+                        {usuario?.rol === 'ADMINISTRADOR' &&
+                          p.hijos.map((hijo, indice) => hijo.fechaNacimientoSolicitada && (
+                            <div
+                              key={`${hijo.nombre}-${indice}`}
+                              className="mt-3 rounded-control border border-amber-200 bg-amber-50 p-3"
+                            >
+                              <p className="text-sm font-semibold text-amber-900">
+                                {hijo.nombre}: {hijo.fechaNacimiento.split('-').reverse().join('/')}
+                                {' → '}
+                                {hijo.fechaNacimientoSolicitada.split('-').reverse().join('/')}
+                              </p>
+                              <div className="mt-2 flex gap-2">
+                                <Boton
+                                  disabled={guardando}
+                                  onClick={() => void resolverSolicitud(p.id, indice, true)}
+                                >
+                                  Aprobar
+                                </Boton>
+                                <Boton
+                                  variante="secundario"
+                                  disabled={guardando}
+                                  onClick={() => void resolverSolicitud(p.id, indice, false)}
+                                >
+                                  Rechazar
+                                </Boton>
+                              </div>
+                            </div>
+                          ))}
                       </div>
                     </div>
                   )}
